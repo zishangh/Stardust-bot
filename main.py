@@ -7,12 +7,14 @@ from threading import Thread
 import datetime
 import json
 
-# Flask Setup for Render Deployment
+# =========================================================
+# ⚙️ INFRASTRUCTURE LAYER (KEEP ALIVE & DB)
+# =========================================================
 app = Flask('')
 
 @app.route('/')
 def home():
-    return "Stardust Enterprise Bot is running perfectly at maximum capacity!"
+    return "Stardust Premium Engine Core Operational."
 
 def run():
     app.run(host='0.0.0.0', port=8080)
@@ -22,10 +24,9 @@ def keep_alive():
     t.daemon = True
     t.start()
 
-# Data Persistence / Database Setup (JSON Files)
-DATA_FILE = "server_data.json"
+DATA_FILE = "server_configurations.json"
 
-def load_data():
+def load_db():
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r") as f:
@@ -34,11 +35,13 @@ def load_data():
             return {}
     return {}
 
-def save_data(data):
+def save_db(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-# Initializing Bot with Premium Intents
+# =========================================================
+# 🤖 BOT INITIALIZATION
+# =========================================================
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -51,185 +54,186 @@ async def on_ready():
     print(f'Logged in as {bot.user.name}')
     try:
         synced = await bot.tree.sync()
-        print(f"Enterprise Level: Successfully synced {len(synced)} high-end slash command(s) globally!")
+        print(f"Operational Success: Synced {len(synced)} high-end slash commands.")
     except Exception as e:
-        print(f"Sync Error: {e}")
+        print(f"Sync Failure: {e}")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.competing, name="Stardust Global Network 🌐"))
 
 # =========================================================
-# ⚙️ SYSTEM 1: AUTOMATIC ADVANCED GREETING SYSTEM
+# 🛠️ SYSTEM 1: PREMIUM WELCOME & MANAGEMENT SUITE
 # =========================================================
 
-# 1. SET WELCOME CHANNEL COMMAND
-@bot.tree.command(name="set-welcome", description="⚙️ Configure the premium welcome channel for this server")
+# 1. SETUP CHANNEL
+@bot.tree.command(name="welcome-set", description="⚙️ Map the premium automated greeting system to a text channel")
 @app_commands.checks.has_permissions(administrator=True)
-async def set_welcome(interaction: discord.Interaction, channel: discord.TextChannel):
-    data = load_data()
-    guild_id = str(interaction.guild.id)
+async def welcome_set(interaction: discord.Interaction, channel: discord.TextChannel):
+    db = load_db()
+    g_id = str(interaction.guild.id)
+    if g_id not in db:
+        db[g_id] = {}
+    db[g_id]["channel"] = channel.id
+    if "msg" not in db[g_id]:
+        db[g_id]["msg"] = "Welcome to the community! We are absolutely thrilled to have you here with us."
+    save_db(db)
     
-    if guild_id not in data:
-        data[guild_id] = {}
-        
-    data[guild_id]["welcome_channel"] = channel.id
-    save_data(data)
-    
-    embed = discord.Embed(
-        title="⚙️ Configuration Updated",
-        description=f"Premium Welcome module has been successfully mapped to {channel.mention}.",
-        color=discord.Color.green()
-    )
-    embed.set_footer(text="Stardust Administration Panel 🖥️")
+    embed = discord.Embed(title="⚙️ Configuration Saved", description=f"Premium Welcome system mapped to {channel.mention}.", color=discord.Color.green())
     await interaction.response.send_message(embed=embed)
 
-# 2. AUTOMATIC WELCOME EVENT (Premium Card Layout)
+# 2. CUSTOMIZE MESSAGE
+@bot.tree.command(name="welcome-msg", description="✍️ Customize the embedded card text message description")
+@app_commands.checks.has_permissions(administrator=True)
+async def welcome_msg(interaction: discord.Interaction, text: str):
+    db = load_db()
+    g_id = str(interaction.guild.id)
+    if g_id not in db:
+        db[g_id] = {}
+    db[g_id]["msg"] = text
+    save_db(db)
+    
+    embed = discord.Embed(title="⚙️ Message Updated", description=f"Card display message has been set to:\n`{text}`", color=discord.Color.blue())
+    await interaction.response.send_message(embed=embed)
+
+# 3. RESET MODULE
+@bot.tree.command(name="welcome-reset", description="❌ Wipe welcome module settings and disable alerts")
+@app_commands.checks.has_permissions(administrator=True)
+async def welcome_reset(interaction: discord.Interaction):
+    db = load_db()
+    g_id = str(interaction.guild.id)
+    if g_id in db and "channel" in db[g_id]:
+        del db[g_id]["channel"]
+        save_db(db)
+        embed = discord.Embed(description="🗑️ Welcome configuration cleared successfully.", color=discord.Color.red())
+    else:
+        embed = discord.Embed(description="❌ Welcome configuration not active on this server.", color=discord.Color.orange())
+    await interaction.response.send_message(embed=embed)
+
+# Helper function to generate premium welcome embed card layout
+def generate_welcome_card(member, custom_msg):
+    embed = discord.Embed(
+        title="✨ WELCOME TO THE COMMUNITY ✨",
+        description=f"Welcome {member.mention} to **{member.guild.name}**!\n\n{custom_msg}",
+        color=discord.Color.from_rgb(255, 192, 203)
+    )
+    embed.add_field(name="User Identity", value=f"👤 **Tag:** {member.name}\n🆔 **ID:** {member.id}", inline=True)
+    embed.add_field(name="Server Scale", value=f"📈 **Member Count:** {member.guild.member_count}th member", inline=True)
+    embed.set_image(url="https://images.squarespace-cdn.com/content/v1/5c1a84f39f8770b02996d925/1547000216694-O5OHZZN22MZZIKREB2B8/banner-abstract.png")
+    embed.set_thumbnail(url=member.display_avatar.url)
+    embed.set_footer(text=f"Account Created: {member.created_at.strftime('%Y-%m-%d')}")
+    return embed
+
+# 4. TEST SYSTEM INSTANTLY
+@bot.tree.command(name="welcome-test", description="🧪 Trigger a simulated welcome embed card event to test settings")
+@app_commands.checks.has_permissions(administrator=True)
+async def welcome_test(interaction: discord.Interaction):
+    db = load_db()
+    g_id = str(interaction.guild.id)
+    if g_id in db and "channel" in db[g_id]:
+        channel = interaction.guild.get_channel(db[g_id]["channel"])
+        if channel:
+            custom_msg = db[g_id].get("msg", "Welcome to the community!")
+            card = generate_welcome_card(interaction.user, custom_msg)
+            await channel.send(content=f"👋 Test Simulation: {interaction.user.mention}!", embed=card)
+            await interaction.response.send_message("✅ Test embed triggered in configured welcome channel.", ephemeral=True)
+            return
+    await interaction.response.send_message("❌ Welcome channel not configured. Run `/welcome-set` first.", ephemeral=True)
+
+# 5. ACTUAL AUTOMATIC EVENTS
 @bot.event
 async def on_member_join(member: discord.Member):
-    data = load_data()
-    guild_id = str(member.guild.id)
-    
-    if guild_id in data and "welcome_channel" in data[guild_id]:
-        channel_id = data[guild_id]["welcome_channel"]
-        channel = member.guild.get_channel(channel_id)
-        
+    db = load_db()
+    g_id = str(member.guild.id)
+    if g_id in db and "channel" in db[g_id]:
+        channel = member.guild.get_channel(db[g_id]["channel"])
         if channel:
-            member_count = member.guild.member_count
-            
-            # Ultra-clean premium embedded card layout like top bots
-            embed = discord.Embed(
-                title="✨ WELCOME TO THE COMMUNITY ✨",
-                description=f"Welcome {member.mention} to **{member.guild.name}**!\nWe are absolutely thrilled to have you here with us.",
-                color=discord.Color.from_rgb(255, 192, 203) # Premium aesthetic pink
-            )
-            embed.add_field(name="User Identity", value=f"👤 **Tag:** {member.name}\n🆔 **ID:** {member.id}", inline=True)
-            embed.add_field(name="Server Scale", value=f"📈 **Member Count:** {member_count}th member", inline=True)
-            
-            # Premium abstract layout header image banner
-            embed.set_image(url="https://i.imgur.com/uNbe7w2.png")
-            embed.set_thumbnail(url=member.display_avatar.url)
-            embed.set_footer(text=f"Account Created: {member.created_at.strftime('%Y-%m-%d')}")
-            
-            # Outside ping for guaranteed blue notification highlights
-            await channel.send(content=f"👋 Welcome {member.mention}!", embed=embed)
+            custom_msg = db[g_id].get("msg", "Welcome to the community!")
+            card = generate_welcome_card(member, custom_msg)
+            await channel.send(content=f"👋 Welcome {member.mention}!", embed=card)
 
-# 3. AUTOMATIC LEAVE EVENT
 @bot.event
 async def on_member_remove(member: discord.Member):
-    data = load_data()
-    guild_id = str(member.guild.id)
-    
-    if guild_id in data and "welcome_channel" in data[guild_id]:
-        channel_id = data[guild_id]["welcome_channel"]
-        channel = member.guild.get_channel(channel_id)
-        
+    db = load_db()
+    g_id = str(member.guild.id)
+    if g_id in db and "channel" in db[g_id]:
+        channel = member.guild.get_channel(db[g_id]["channel"])
         if channel:
-            embed = discord.Embed(
-                description=f"💔 **{member.name}** has left the server. Current total count: {member.guild.member_count} members.",
-                color=discord.Color.dark_gray()
-            )
+            embed = discord.Embed(description=f"💔 **{member.name}** has left the server. Member count drop: {member.guild.member_count} members.", color=discord.Color.dark_gray())
             await channel.send(embed=embed)
 
 # =========================================================
-# 🍧 MODULE 2: NEKOBOT STYLE ANIME FEATURES
+# 🍧 MODULE 2: RE-OPTIMIZED HIGH QUALITY FUN INTERACTIONS
 # =========================================================
 
-@bot.tree.command(name="serve", description="☕ Serve a fresh coffee to a friend in a cute cafe style")
+@bot.tree.command(name="serve", description="☕ Serve a fresh brewed cafe drink to a server member")
 async def serve(interaction: discord.Interaction, member: discord.Member):
-    embed = discord.Embed(
-        title="✨ Stardust Cafe Special Order! ✨",
-        description=f"**A fresh, warm coffee has been freshly brewed and served!** ☕🍰",
-        color=discord.Color.from_rgb(245, 222, 179)
-    )
-    embed.set_image(url="https://media.tenor.com/7S8Y-Xshg3YAAAAC/anime-coffee.gif")
+    embed = discord.Embed(title="✨ Stardust Cafe Special Order! ✨", description="**A fresh, hot coffee has been prepared and served at your table!** ☕🍰", color=discord.Color.from_rgb(245, 222, 179))
+    embed.set_image(url="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3h0Y3h4ZzZ0bWp3NW4xeWxtdDJvN2d5dGtsamFlZ3R0ZzZmdDZzMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/1498bN8wK8zT0c/giphy.gif")
     embed.set_footer(text="Have a cozy day at Stardust Cafe! 💕")
     await interaction.response.send_message(content=f"☕ {interaction.user.mention} serves a delicious coffee to {member.mention}!", embed=embed)
 
-@bot.tree.command(name="hug", description="🫂 Give a warm, cozy anime hug to someone")
+@bot.tree.command(name="hug", description="🫂 Wrap your arms tightly around someone to deliver cozy vibes")
 async def hug(interaction: discord.Interaction, member: discord.Member):
-    embed = discord.Embed(
-        title="✨ A Warm Stardust Hug! ✨",
-        description=f"**Sending cute, cozy and wholesome vibes across the server!** 💖",
-        color=discord.Color.from_rgb(255, 182, 193)
-    )
-    embed.set_image(url="https://media.tenor.com/v8t_P6K3L48AAAAC/anime-hug.gif")
+    embed = discord.Embed(title="✨ A Wholesome Stardust Hug! ✨", description="**The room feels warmer already! Wholesome vibes are traveling across channels!** 💖", color=discord.Color.from_rgb(255, 182, 193))
+    embed.set_image(url="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDJ0Y2c1amwzdWlhM3gxeGNidmxtMWd5dWQzYjU5dGtwcnF0OTY0bCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lrr9rHuoJOE0w/giphy.gif")
     embed.set_footer(text="Shared with love in Stardust Cafe! ✨")
     await interaction.response.send_message(content=f"🫂 {interaction.user.mention} wraps their arms tightly around {member.mention}!", embed=embed)
 
 # =========================================================
-# 🛡️ MODULE 3: HIGH-LEVEL MODERATION COMMANDS
+# 🛡️ MODULE 3: MODERATION SUITE
 # =========================================================
 
-@bot.tree.command(name="kick", description="🔒 Kick a member from the server")
+@bot.tree.command(name="kick", description="🔒 Remove a user from the guild perimeter")
 @commands.has_permissions(kick_members=True)
 async def kick(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
     try:
         await member.kick(reason=reason)
-        embed = discord.Embed(
-            title="🔨 Member Kicked",
-            description=f"**{member.name}** has been successfully removed from the server.",
-            color=discord.Color.red()
-        )
+        embed = discord.Embed(title="🔨 Member Kicked", description=f"**{member.name}** removed safely.", color=discord.Color.red())
         embed.add_field(name="Reason", value=reason)
-        await interaction.response.send_message(content=member.mention, embed=embed)
-    except Exception:
-        await interaction.response.send_message("❌ Error: Permission Hierarchy Failed.", ephemeral=True)
+        await interaction.response.send_message(embed=embed)
+    except:
+        await interaction.response.send_message("❌ Administration structural error.", ephemeral=True)
 
-@bot.tree.command(name="ban", description="🚫 Permanently ban a member from the server")
+@bot.tree.command(name="ban", description="🚫 Blacklist and permanently terminate a profile from the server")
 @commands.has_permissions(ban_members=True)
 async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
     try:
         await member.ban(reason=reason)
-        embed = discord.Embed(
-            title="🚨 Member Banned",
-            description=f"**{member.name}** has been permanently banned from the server.",
-            color=discord.Color.dark_red()
-        )
+        embed = discord.Embed(title="🚨 Member Banned", description=f"**{member.name}** data purged.", color=discord.Color.dark_red())
         embed.add_field(name="Reason", value=reason)
-        await interaction.response.send_message(content=member.mention, embed=embed)
-    except Exception:
-        await interaction.response.send_message("❌ Error: Hierarchy issue.", ephemeral=True)
+        await interaction.response.send_message(embed=embed)
+    except:
+        await interaction.response.send_message("❌ Permissions check hierarchy failed.", ephemeral=True)
 
-@bot.tree.command(name="mute", description="🤫 Timeout a member for a specific duration")
+@bot.tree.command(name="mute", description="🤫 Enforce a quiet protocol status profile restriction")
 @commands.has_permissions(moderate_members=True)
 async def mute(interaction: discord.Interaction, member: discord.Member, minutes: int, reason: str = "No reason provided"):
     try:
         duration = datetime.timedelta(minutes=minutes)
         await member.timeout(duration, reason=reason)
-        embed = discord.Embed(
-            title="🤫 Member Muted",
-            description=f"**{member.name}** has been placed in timeout for `{minutes}` minutes.",
-            color=discord.Color.orange()
-        )
-        embed.add_field(name="Reason", value=reason)
-        await interaction.response.send_message(content=member.mention, embed=embed)
-    except Exception as e:
-        await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
+        embed = discord.Embed(title="🤫 Timeout Instantiated", description=f"**{member.name}** muted for `{minutes}` minutes.", color=discord.Color.orange())
+        await interaction.response.send_message(embed=embed)
+    except:
+        await interaction.response.send_message("❌ Command execution invalid profile state.", ephemeral=True)
 
 # =========================================================
-# 📜 MODULE 4: TOP LEVEL HELP & INFO MENU
+# 📜 MODULE 4: UTILITY CONTROL CENTER
 # =========================================================
 
-@bot.tree.command(name="help", description="📖 View all available commands for Stardust Bot")
+@bot.tree.command(name="help", description="📖 View the standard network operating documentation commands")
 async def help_command(interaction: discord.Interaction):
-    embed = discord.Embed(
-        title="✨ Stardust Enterprise Bot - Premium Menu ✨",
-        description="Welcome to the high-level custom service network. Here are the active modules:",
-        color=discord.Color.blurple()
-    )
-    embed.add_field(name="⚙️ Admin/Systems Setup", value="`/set-welcome` - Configure greeting updates", inline=False)
-    embed.add_field(name="🛡️ Moderation System", value="`/kick` - Kick users\n`/ban` - Ban users\n`/mute` - Timeout configurations", inline=False)
-    embed.add_field(name="☕ Cafe & Fun System", value="`/serve` - Interactive coffee system\n`/hug` - Wholesome interaction tool\n`/ping` - Speed analyzer", inline=False)
-    embed.set_footer(text="Stardust Premium Core Engine 🌟")
+    embed = discord.Embed(title="✨ Stardust Enterprise Control Suite ✨", description="Operating standard premium production protocols:", color=discord.Color.blurple())
+    embed.add_field(name="⚙️ Management Suite", value="`/welcome-set` - Map welcome alert\n`/welcome-msg` - Custom greeting content\n`/welcome-test` - Trigger test module layout\n`/welcome-reset` - Reset welcome database entries", inline=False)
+    embed.add_field(name="🛡️ Moderation Operations", value="`/kick` - Evict profile\n`/ban` - Terminate profile permission access\n`/mute` - Restrict text capability status", inline=False)
+    embed.add_field(name="☕ Cafe Infrastructure", value="`/serve` - Interactive drink delivery\n`/hug` - Animation connection module\n`/ping` - System execution speed delay check", inline=False)
     await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="ping", description="⚡ Test the bot's reaction speed")
+@bot.tree.command(name="ping", description="⚡ Performance speed analytics report")
 async def ping(interaction: discord.Interaction):
-    latency = round(bot.latency * 1000)
-    await interaction.response.send_message(f"🏓 Pong! Latency is `{latency}ms` ✨")
+    await interaction.response.send_message(f"🏓 Pong! Core Latency Response speed: `{round(bot.latency * 1000)}ms` ✨")
 
-# Bot Deployment Integration
+# Deploy System Launch Configuration
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
 if token:
     bot.run(token)
 else:
-    print("Error: DISCORD_TOKEN is missing!")
+    print("Error: Running operation token string empty.")
