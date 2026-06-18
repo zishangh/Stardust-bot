@@ -7,6 +7,9 @@ from threading import Thread
 import datetime
 import json
 import random
+import io
+import requests
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 # =========================================================
 # ⚙️ INFRASTRUCTURE LAYER (KEEP ALIVE & DB)
@@ -138,6 +141,97 @@ async def reward_test(interaction: discord.Interaction):
             await interaction.response.send_message("Test reward embed triggered in reward channel.", ephemeral=True)
             return
     await interaction.response.send_message("Reward channel not configured ʘ⁠‿⁠ʘ Run `/reward-set` first.", ephemeral=True)
+# =========================================================
+# 📊 PREMIUM LEVEL, XP & RANK SYSTEM
+# =========================================================
+
+@bot.tree.command(name="level-set-channel", description="📊 Set the channel where level up cards will be announced")
+@app_commands.checks.has_permissions(administrator=True)
+async def level_set_channel(interaction: discord.Interaction, channel: discord.TextChannel):
+    db = load_db()
+    g_id = str(interaction.guild.id)
+    if g_id not in db: db[g_id] = {}
+    db[g_id]["level_channel"] = channel.id
+    save_db(db)
+    await interaction.response.send_message(f"✨ Level up alerts will now be sent in {channel.mention}!", ephemeral=True)
+
+@bot.tree.command(name="level-set-msg", description="💬 Customize the text message sent along with the level up card")
+@app_commands.checks.has_permissions(administrator=True)
+async def level_set_msg(interaction: discord.Interaction, message: str):
+    db = load_db()
+    g_id = str(interaction.guild.id)
+    if g_id not in db: db[g_id] = {}
+    db[g_id]["level_msg"] = message
+    save_db(db)
+    await interaction.response.send_message(f"✅ Level up message updated to:\n`{message}`", ephemeral=True)
+
+@bot.tree.command(name="rank", description="💳 Display your premium rank card, XP stats, and leaderboard placement")
+async def rank(interaction: discord.Interaction, member: discord.Member = None):
+    await interaction.response.defer()
+    target = member or interaction.user
+    db = load_db()
+    g_id = str(interaction.guild.id)
+    u_id = str(target.id)
+    
+    # User data fetch or initialize
+    user_data = db.get(g_id, {}).get("users", {}).get(u_id, {"xp": 0, "level": 1, "balance": 0})
+    xp = user_data.get("xp", 0)
+    lvl = user_data.get("level", 1)
+    bal = user_data.get("balance", 0)
+    next_xp = lvl * 375  # Dynamic scaling line
+    
+    # Calculate Server Activity Leaderboard Rank
+    server_users = db.get(g_id, {}).get("users", {})
+    sorted_users = sorted(server_users.items(), key=lambda x: x[1].get("xp", 0), reverse=True)
+    rank_pos = 1
+    for index, (uid, data) in enumerate(sorted_users):
+        if uid == u_id:
+            rank_pos = index + 1
+            break
+
+    # 🎨 PIL Image Generation Engine (Premium Dark Matte Card)
+    W, H = 900, 300
+    card = Image.new("RGBA", (W, H), (20, 20, 27, 255))
+    draw = ImageDraw.Draw(card)
+    
+    # Glassmorphism aesthetic sub-panel
+    draw.rounded_rectangle([20, 20, W-20, H-20], radius=20, fill=(30, 32, 45, 255), outline=(50, 55, 75, 255), width=2)
+    
+    # Draw Progress Bar Track
+    bar_x1, bar_y1, bar_x2, bar_y2 = 260, 210, 840, 235
+    draw.rounded_rectangle([bar_x1, bar_y1, bar_x2, bar_y2], radius=12, fill=(45, 48, 68, 255))
+    
+    # Draw Glowing Progress Bar Fill
+    progress = min(xp / next_xp, 1.0) if next_xp > 0 else 1.0
+    if progress > 0:
+        fill_x2 = bar_x1 + int((bar_x2 - bar_x1) * progress)
+        draw.rounded_rectangle([bar_x1, bar_y1, fill_x2, bar_y2], radius=12, fill=(114, 137, 218, 255))
+        
+    # Profile Picture Circular masking
+    pfp_url = target.display_avatar.url
+    pfp_res = requests.get(pfp_url)
+    pfp_img = Image.open(io.BytesIO(pfp_res.content)).convert("RGBA").resize((180, 180))
+    
+    mask = Image.new("L", (180, 180), 0)
+    mask_draw = ImageDraw.Draw(mask)
+    mask_draw.ellipse((0, 0, 180, 180), fill=255)
+    
+    pfp_circular = ImageOps.fit(pfp_img, (180, 180), centering=(0.5, 0.5))
+    card.paste(pfp_circular, (50, 60), mask=mask)
+    draw.ellipse((48, 58, 232, 242), outline=(114, 137, 218, 255), width=4) # Avatar Ring
+    
+    # Text Placement using default fallback font mechanics for platform safety
+    draw.text((260, 55), f"{target.name}", fill=(255, 255, 255, 255))
+    draw.text((260, 110), f"Level {lvl}  •  Rank #{rank_pos}", fill=(114, 137, 218, 255))
+    draw.text((260, 160), f"Wallet: ${bal:,}  •  XP: {xp}/{next_xp}", fill=(180, 185, 200, 255))
+    
+    # Byte buffer translation
+    fp = io.BytesIO()
+    card.save(fp, "PNG")
+    fp.seek(0)
+    
+    file = discord.File(fp, filename="rank_card.png")
+    await interaction.followup.send(file=file)
     
 # CLEAN DYNO STYLE ENGINE
 def generate_welcome_card(member):
@@ -192,7 +286,55 @@ async def on_member_remove(member: discord.Member):
         if channel:
             embed = discord.Embed(description=f"💔 **{member.name}** left the server. Total scale: {member.guild.member_count} members.", color=discord.Color.dark_gray())
             await channel.send(embed=embed)
+@bot.event
+async def on_message(message: discord.Message):
+    if message.author.bot or not message.guild:
+        return
 
+    g_id = str(message.guild.id)
+    u_id = str(message.author.id)
+    db = load_db()
+    
+    if g_id not in db: db[g_id] = {}
+    if "users" not in db[g_id]: db[g_id]["users"] = {}
+    if u_id not in db[g_id]["users"]:
+        db[g_id]["users"][u_id] = {"xp": 0, "level": 1, "balance": 0}
+        
+    user_data = db[g_id]["users"][u_id]
+    old_lvl = user_data.get("level", 1)
+    xp_gain = random.randint(15, 25)
+    user_data["xp"] = user_data.get("xp", 0) + xp_gain
+    
+    next_xp = old_lvl * 375
+    if user_data["xp"] >= next_xp:
+        user_data["level"] = old_lvl + 1
+        user_data["xp"] -= next_xp
+        save_db(db)
+        
+        if "level_channel" in db[g_id]:
+            lvl_channel = message.guild.get_channel(db[g_id]["level_channel"])
+            if lvl_channel:
+                custom_msg = db[g_id].get("level_msg", "GG {member}! You leveled up!").format(member=message.author.mention)
+                await lvl_channel.send(f"🏆 {custom_msg} **Level {old_lvl + 1}**!")
+
+    if random.random() < 0.10 and "reward_channel" in db[g_id]:
+        reward_channel = message.guild.get_channel(db[g_id]["reward_channel"])
+        if reward_channel:
+            amount = random.randint(5000, 75000)
+            user_data["balance"] = user_data.get("balance", 0) + amount
+            
+            embed = discord.Embed(title="✨ lucky", color=discord.Color.from_rgb(241, 196, 15))
+            embed.description = (
+                f"{message.author.mention}\n\n"
+                f"**+${amount:,}**\n\n"
+                f"*chat wage* ·  *lvl {user_data['level']}*\n\n"
+                f"*keeping the vibe alive and thriving.*"
+            )
+            await reward_channel.send(content=message.author.mention, embed=embed)
+
+    save_db(db)
+    await bot.process_commands(message)
+    
 # =========================================================
 # 🍧 MODULE 2: FUN INTERACTIONS (GIF ENDPOINT FIXED)
 # =========================================================
