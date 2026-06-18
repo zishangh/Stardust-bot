@@ -312,7 +312,7 @@ async def on_message(message: discord.Message):
         
     user_data = db[g_id]["users"][u_id]
     
-    # 📈 Message counter tracker core activation
+    # 📈 Message counter tracker activation
     user_data["messages"] = user_data.get("messages", 0) + 1
     
     old_lvl = user_data.get("level", 1)
@@ -321,15 +321,54 @@ async def on_message(message: discord.Message):
     
     next_xp = old_lvl * 375
     if user_data["xp"] >= next_xp:
-        user_data["level"] = old_lvl + 1
+        new_lvl = old_lvl + 1
+        user_data["level"] = new_lvl
         user_data["xp"] -= next_xp
         save_db(db)
         
         if "level_channel" in db[g_id]:
             lvl_channel = message.guild.get_channel(db[g_id]["level_channel"])
             if lvl_channel:
-                custom_msg = db[g_id].get("level_msg", "GG {member}! You leveled up!").format(member=message.author.mention)
-                await lvl_channel.send(f"🏆 {custom_msg} **Level {old_lvl + 1}**!")
+                # 🎨 TIKO STYLE AUTOMATIC LEVEL UP HD POSTER (950x320)
+                W, H = 950, 320
+                lvl_card = Image.new("RGBA", (W, H), (245, 238, 227, 255)) # Premium Badami Background
+                l_draw = ImageDraw.Draw(lvl_card)
+                
+                # Frosted Outer Frame
+                l_draw.rounded_rectangle([20, 20, W-20, H-20], radius=25, fill=(255, 254, 252, 130), outline=(150, 125, 105, 255), width=3)
+                
+                # Fetch User Circular Avatar for Level Poster
+                try:
+                    pfp_url = message.author.display_avatar.url
+                    pfp_res = requests.get(pfp_url)
+                    pfp_img = Image.open(io.BytesIO(pfp_res.content)).convert("RGBA").resize((180, 180))
+                    
+                    mask = Image.new("L", (180, 180), 0)
+                    mask_draw = ImageDraw.Draw(mask)
+                    mask_draw.ellipse((0, 0, 180, 180), fill=255)
+                    
+                    pfp_circular = ImageOps.fit(pfp_img, (180, 180), centering=(0.5, 0.5))
+                    lvl_card.paste(pfp_circular, (50, 70), mask=mask)
+                    l_draw.ellipse((46, 66, 234, 254), outline=(138, 105, 93, 255), width=4) # Inner ring
+                except Exception:
+                    pass # Fallback if avatar fails to fetch
+                
+                # ✒️ Elegant Serif Text Placement (Coffee Charcoal Color)
+                l_draw.text((270, 70), "✨ LEVEL UP! ✨", fill=(84, 62, 49, 255), stroke_width=1)
+                l_draw.text((270, 135), f"@{message.author.name.lower()} has reached", fill=(125, 96, 81, 255))
+                l_draw.text((270, 190), f"LEVEL {new_lvl} 🏆", fill=(54, 43, 38, 255), stroke_width=1)
+                
+                # Center Bottom Server Badge
+                s_name = f"~ {message.guild.name.upper()} ~"
+                l_draw.text((W // 2 - 50, 275), s_name, fill=(160, 145, 130, 255))
+                
+                fp = io.BytesIO()
+                lvl_card.save(fp, "PNG")
+                fp.seek(0)
+                file = discord.File(fp, filename="levelup.png")
+                
+                custom_msg = db[g_id].get("level_msg", "GG {member}!").format(member=message.author.mention)
+                await lvl_channel.send(content=custom_msg, file=file)
 
     if random.random() < 0.10 and "reward_channel" in db[g_id]:
         reward_channel = message.guild.get_channel(db[g_id]["reward_channel"])
