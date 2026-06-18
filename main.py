@@ -30,7 +30,6 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f'Logged in as {bot.user.name}')
     try:
-        # Global sync + forceful tree sync for instant results
         synced = await bot.tree.sync()
         print(f"Successfully synced {len(synced)} slash command(s) globally!")
     except Exception as e:
@@ -41,7 +40,6 @@ async def on_ready():
 # 🛡️ MODULE 1: HIGH-LEVEL MODERATION COMMANDS
 # =========================================================
 
-# 1. KICK COMMAND
 @bot.tree.command(name="kick", description="🔒 Kick a member from the server")
 @commands.has_permissions(kick_members=True)
 async def kick(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
@@ -54,11 +52,10 @@ async def kick(interaction: discord.Interaction, member: discord.Member, reason:
         )
         embed.add_field(name="Reason", value=reason)
         embed.set_footer(text="Stardust Security System ✨")
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(content=member.mention, embed=embed)
     except Exception:
         await interaction.response.send_message("❌ Error: I do not have permission to kick this member.", ephemeral=True)
 
-# 2. BAN COMMAND
 @bot.tree.command(name="ban", description="🚫 Permanently ban a member from the server")
 @commands.has_permissions(ban_members=True)
 async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
@@ -71,11 +68,10 @@ async def ban(interaction: discord.Interaction, member: discord.Member, reason: 
         )
         embed.add_field(name="Reason", value=reason)
         embed.set_footer(text="Stardust Security System ✨")
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(content=member.mention, embed=embed)
     except Exception:
         await interaction.response.send_message("❌ Error: Failed to ban. Please check my role hierarchy.", ephemeral=True)
 
-# 3. MUTE / TIMEOUT COMMAND
 @bot.tree.command(name="mute", description="🤫 Timeout a member for a specific duration")
 @commands.has_permissions(moderate_members=True)
 async def mute(interaction: discord.Interaction, member: discord.Member, minutes: int, reason: str = "No reason provided"):
@@ -84,41 +80,48 @@ async def mute(interaction: discord.Interaction, member: discord.Member, minutes
         await member.timeout(duration, reason=reason)
         embed = discord.Embed(
             title="🤫 Member Muted",
-            description=f"**{member.mention}** has been placed in timeout for `{minutes}` minutes.",
+            description=f"**{member.name}** has been placed in timeout for `{minutes}` minutes.",
             color=discord.Color.orange()
         )
         embed.add_field(name="Reason", value=reason)
         embed.set_footer(text="Stardust Security System ✨")
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(content=member.mention, embed=embed)
     except Exception as e:
         await interaction.response.send_message(f"❌ Error: Could not mute member: {e}", ephemeral=True)
 
 # =========================================================
-# 🍧 MODULE 2: CUTE & UNIQUE CAFE FEATURES
+# 🍧 MODULE 2: NEKOBOT STYLE CUTE ANIME FEATURES
 # =========================================================
 
-# 1. SERVE COFFEE
-@bot.tree.command(name="serve", description="☕ Serve a fresh, warm coffee to a friend")
+# 1. SERVE COFFEE (Anime Restaurant Style GIF)
+@bot.tree.command(name="serve", description="☕ Serve a fresh coffee to a friend in a cute cafe style")
 async def serve(interaction: discord.Interaction, member: discord.Member):
     embed = discord.Embed(
-        title="✨ Stardust Cafe Special Order ✨",
-        description=f"{interaction.user.mention} has served a fresh, warm **Stardust Special Coffee** to {member.mention}! ☕🍰",
+        title="✨ Stardust Cafe Special Order! ✨",
+        description=f"**A fresh, warm coffee has been freshly brewed and served!** ☕🍰",
         color=discord.Color.from_rgb(245, 222, 179)
     )
+    # High quality anime restaurant coffee serving GIF
+    embed.set_image(url="https://media.tenor.com/7S8Y-Xshg3YAAAAC/anime-coffee.gif")
     embed.set_footer(text="Have a cozy day at Stardust Cafe! 💕")
-    await interaction.response.send_message(embed=embed)
+    
+    # Text content ke andar ping daala hai taaki NekoBot ki tarah proper blue ping ho!
+    await interaction.response.send_message(content=f"☕ {interaction.user.mention} serves a delicious coffee to {member.mention}!", embed=embed)
 
-# 2. HUG COMMAND WITH GIF
-@bot.tree.command(name="hug", description="🫂 Give a warm anime hug to a server member")
+# 2. HUG COMMAND (Premium Anime Hug GIF)
+@bot.tree.command(name="hug", description="🫂 Give a warm, cozy anime hug to someone")
 async def hug(interaction: discord.Interaction, member: discord.Member):
     embed = discord.Embed(
-        title="✨ Stardust Hug! ✨",
-        description=f"{interaction.user.mention} wraps their arms around {member.mention} and gives them a tight, cozy hug! 💕",
+        title="✨ A Warm Stardust Hug! ✨",
+        description=f"**Sending cute, cozy and wholesome vibes across the server!** 💖",
         color=discord.Color.from_rgb(255, 182, 193)
     )
-    embed.set_image(url="https://media.tenor.com/jRda_V9X76UAAAAC/anime-hug.gif")
+    # Super cute premium anime couple hugging GIF
+    embed.set_image(url="https://media.tenor.com/v8t_P6K3L48AAAAC/anime-hug.gif")
     embed.set_footer(text="Shared with love in Stardust Cafe! ✨")
-    await interaction.response.send_message(embed=embed)
+    
+    # Text content mein main pings daal diye hain jo ekdum perfect kaam karenge
+    await interaction.response.send_message(content=f"🫂 {interaction.user.mention} wraps their arms tightly around {member.mention}!", embed=embed)
 
 # =========================================================
 # 📜 MODULE 3: TOP LEVEL HELP & INFO MENU
