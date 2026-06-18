@@ -60,7 +60,7 @@ async def on_ready():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.competing, name="Stardust Global Network 🌐"))
 
 # =========================================================
-# 🛠️ SYSTEM 1: COMPACT WELCOME SYSTEM (YOUR CUSTOM EMOJIS)
+# 🛠️ SYSTEM 1: CUSTOM DECORATED WELCOME SYSTEM
 # =========================================================
 
 @bot.tree.command(name="welcome-set", description="⚙️ Map the greeting system to a text channel")
@@ -71,24 +71,9 @@ async def welcome_set(interaction: discord.Interaction, channel: discord.TextCha
     if g_id not in db:
         db[g_id] = {}
     db[g_id]["channel"] = channel.id
-    if "msg" not in db[g_id]:
-        db[g_id]["msg"] = "We are absolutely thrilled to have you here with us (⁠.⁠ ❛ ᴗ ❛ ⁠.)"
     save_db(db)
     
     embed = discord.Embed(description=f"Configuration Saved (⁠•⁠‿⁠•⁠) Mapped to {channel.mention}.", color=discord.Color.green())
-    await interaction.response.send_message(embed=embed)
-
-@bot.tree.command(name="welcome-msg", description="✍️ Customize the compact card text message description")
-@app_commands.checks.has_permissions(administrator=True)
-async def welcome_msg(interaction: discord.Interaction, text: str):
-    db = load_db()
-    g_id = str(interaction.guild.id)
-    if g_id not in db:
-        db[g_id] = {}
-    db[g_id]["msg"] = text
-    save_db(db)
-    
-    embed = discord.Embed(description=f"Message Updated (⁠◠⁠‿⁠◕⁠)\n`{text}`", color=discord.Color.blue())
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="welcome-reset", description="❌ Wipe welcome module settings")
@@ -104,23 +89,34 @@ async def welcome_reset(interaction: discord.Interaction):
         embed = discord.Embed(description="Welcome configuration not active ʘ⁠‿⁠ʘ", color=discord.Color.orange())
     await interaction.response.send_message(embed=embed)
 
-# Chota, Professional aur Sleek Embed Generator
-def generate_welcome_card(member, custom_msg):
+# AAPKA CUSTOM WELCOME ENGINE TEMPLATE
+def generate_welcome_card(member):
+    # Perfect custom design layout as requested
+    custom_description = (
+        "╭🎈━━━━━━━━━━━━━━━━━━━━━━━━━━╮\n"
+        "   ⭐  *𝑾𝒆𝒍𝒄𝒐𝒎𝒆 𝒕𝒐 𝑺𝒕𝒂𝒓𝒅𝒖𝒔𝒕 𝑪𝒂𝒇𝒆!* ⭐\n"
+        "╰━━━━━━━━━━━━━━━━━━━━━━━━━━🎈╯\n\n"
+        "𝖧𝖾𝗒 {mention}! (⁠◠⁠‿⁠◕⁠)\n\n"
+        "*𝑾𝒆 𝒂𝒓𝒆 𝒔𝒐 𝒉𝒂𝒑𝒑𝒚 𝒕𝒐 𝒉𝒂𝒗𝒆 𝒚𝒐𝒖 𝒉𝒆𝒓𝒆!* (⁠≧⁠▽⁠≦⁠)\n"
+        "*𝑮𝒓𝒂𝒃 𝒂 𝒄𝒖𝒑 𝒐𝒇 𝒄𝒐𝒇𝒇𝒆𝒆, 𝒄𝒉𝒊𝒍𝒍, 𝒂𝒏𝒅 𝒎𝒂𝒌𝒆 𝒏𝒆𝒘 𝒇𝒓𝒊𝒆𝒏𝒅𝒔!* (⁠✯⁠ᴗ⁠✯⁠)\n\n"
+        "📌 𝖣𝗈𝗇'𝗍 𝖿𝗈𝗋𝗀𝖾𝗍 𝗍𝗈 𝖼Check 𝗈𝗎𝗋 𝗋𝗎𝗅𝖾𝗌! (⁠◍⁠•⁠ᴗ⁠•⁠◍)"
+    ).format(mention=member.mention)
+
     embed = discord.Embed(
-        title=f"Welcome to the Community (⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)",
-        description=f"Hey {member.mention}! Welcome to **{member.guild.name}**.\n{custom_msg}",
+        description=custom_description,
         color=discord.Color.from_rgb(255, 192, 203)
     )
-    # Dono details ko ek dum compact single line me kar diya taaki zyada bada na dikhe
-    embed.add_field(name="Identity", value=f"**Tag:** {member.name} | **Count:** {member.guild.member_count}th", inline=False)
     
-    # Sleek Abstract Aesthetic Card Banner Image
-    embed.set_image(url="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop")
+    # Clean Single Line Stats Metadata
+    embed.add_field(name="Identity Protocol", value=f"**Tag:** {member.name} | **Count:** {member.guild.member_count}th member ◉⁠‿⁠◉", inline=False)
+    
+    # AAPKA CUSTOM REQUESTED COFFEE BANNER LINK
+    embed.set_image(url="https://cdn.discordapp.com/attachments/1515969029708320778/1516977720138006632/CofeeManga__A_Popular_Platform_for_Manga_Enthusiasts.jpg?ex=6a349b18&is=6a334998&hm=9838ef43a2c5fc09352e6e954d910dd34aa675081c107d3e90ccf28594687cd9&")
     embed.set_thumbnail(url=member.display_avatar.url)
-    embed.set_footer(text=f"Account Created: {member.created_at.strftime('%Y-%m-%d')} ◉⁠‿⁠◉")
+    embed.set_footer(text=f"Account Created: {member.created_at.strftime('%Y-%m-%d')} •_•")
     return embed
 
-@bot.tree.command(name="welcome-test", description="🧪 Trigger a simulated compact welcome card event")
+@bot.tree.command(name="welcome-test", description="🧪 Trigger a simulated custom decorated welcome card event")
 @app_commands.checks.has_permissions(administrator=True)
 async def welcome_test(interaction: discord.Interaction):
     db = load_db()
@@ -128,10 +124,9 @@ async def welcome_test(interaction: discord.Interaction):
     if g_id in db and "channel" in db[g_id]:
         channel = interaction.guild.get_channel(db[g_id]["channel"])
         if channel:
-            custom_msg = db[g_id].get("msg", "We are absolutely thrilled to have you here with us (⁠.⁠ ❛ ᴗ ❛ ⁠.)")
-            card = generate_welcome_card(interaction.user, custom_msg)
+            card = generate_welcome_card(interaction.user)
             await channel.send(content=f"Welcome {interaction.user.mention} (⁠≧⁠▽⁠≦⁠) !", embed=card)
-            await interaction.response.send_message("Test embed triggered.", ephemeral=True)
+            await interaction.response.send_message("Test custom embed triggered.", ephemeral=True)
             return
     await interaction.response.send_message("Welcome channel not configured ʘ⁠‿⁠ʘ Run `/welcome-set` first.", ephemeral=True)
 
@@ -142,8 +137,7 @@ async def on_member_join(member: discord.Member):
     if g_id in db and "channel" in db[g_id]:
         channel = member.guild.get_channel(db[g_id]["channel"])
         if channel:
-            custom_msg = db[g_id].get("msg", "We are absolutely thrilled to have you here with us (⁠.⁠ ❛ ᴗ ❛ ⁠.)")
-            card = generate_welcome_card(member, custom_msg)
+            card = generate_welcome_card(member)
             await channel.send(content=f"Welcome {member.mention} (⁠≧⁠▽⁠≦⁠) !", embed=card)
 
 @bot.event
@@ -170,7 +164,7 @@ async def serve(interaction: discord.Interaction, member: discord.Member):
 @bot.tree.command(name="hug", description="🫂 Give a warm, cozy anime hug to someone")
 async def hug(interaction: discord.Interaction, member: discord.Member):
     embed = discord.Embed(title="Stardust Hug! (⁠≧⁠▽⁠≦⁠)", description=f"**Wholesome cozy vibes are traveling across channels!** 💖", color=discord.Color.from_rgb(255, 182, 193))
-    embed.set_image(url="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDJ0Y2c1amwzdWlhM3gxeGNidmxtMWd5dWQzYjU5dGtwcnF0OTY0bCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lrr9rHuoJOE0w/giphy.gif")
+    embed.set_image(url="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDJ0Y2c1amwzdWlh)3gxeGNidmxtMWd5dWQzYjU5dGtwcnF0OTY0bCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lrr9rHuoJOE0w/giphy.gif")
     embed.set_footer(text="Shared with love! (⁠•⁠‿⁠•⁠)")
     await interaction.response.send_message(content=f"🫂 {interaction.user.mention} wraps their arms tightly around {member.mention}!", embed=embed)
 
@@ -218,7 +212,7 @@ async def mute(interaction: discord.Interaction, member: discord.Member, minutes
 @bot.tree.command(name="help", description="📖 View all available commands")
 async def help_command(interaction: discord.Interaction):
     embed = discord.Embed(title="Stardust Control Suite (⁠•⁠‿⁠•⁠)", description="Premium active modules:", color=discord.Color.blurple())
-    embed.add_field(name="⚙️ Welcome Setup", value="`/welcome-set` | `/welcome-msg` | `/welcome-test` | `/welcome-reset`", inline=False)
+    embed.add_field(name="⚙️ Welcome Setup", value="`/welcome-set` | `/welcome-test` | `/welcome-reset`", inline=False)
     embed.add_field(name="🛡️ Moderation", value="`/kick` | `/ban` | `/mute`", inline=False)
     embed.add_field(name="☕ Cafe Features", value="`/serve` | `/hug` | `/ping`", inline=False)
     await interaction.response.send_message(embed=embed)
