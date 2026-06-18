@@ -165,7 +165,7 @@ async def level_set_msg(interaction: discord.Interaction, message: str):
     save_db(db)
     await interaction.response.send_message(f"✅ Level up message updated to:\n`{message}`", ephemeral=True)
 
-@bot.tree.command(name="rank", description="💳 Display your premium rank card, XP stats, and leaderboard placement")
+@bot.tree.command(name="rank", description="💳 Display your premium elegant beige rank card & performance stats")
 async def rank(interaction: discord.Interaction, member: discord.Member = None):
     await interaction.response.defer()
     target = member or interaction.user
@@ -173,14 +173,19 @@ async def rank(interaction: discord.Interaction, member: discord.Member = None):
     g_id = str(interaction.guild.id)
     u_id = str(target.id)
     
-    # User data fetch or initialize
-    user_data = db.get(g_id, {}).get("users", {}).get(u_id, {"xp": 0, "level": 1, "balance": 0})
+    user_data = db.get(g_id, {}).get("users", {}).get(u_id, {"xp": 0, "level": 1, "balance": 0, "messages": 0})
     xp = user_data.get("xp", 0)
     lvl = user_data.get("level", 1)
     bal = user_data.get("balance", 0)
-    next_xp = lvl * 375  # Dynamic scaling line
+    msg_count = user_data.get("messages", int(xp / 20) + 1)
+    next_xp = lvl * 375
     
-    # Calculate Server Activity Leaderboard Rank
+    # 🏅 Performance Level Tier Calculator
+    if lvl >= 50: tier = "Grandmaster ✨"
+    elif lvl >= 25: tier = "Elite Vibe 💫"
+    elif lvl >= 10: tier = "Gold Member 🌟"
+    else: tier = "Rising Star 🌱"
+
     server_users = db.get(g_id, {}).get("users", {})
     sorted_users = sorted(server_users.items(), key=lambda x: x[1].get("xp", 0), reverse=True)
     rank_pos = 1
@@ -189,43 +194,48 @@ async def rank(interaction: discord.Interaction, member: discord.Member = None):
             rank_pos = index + 1
             break
 
-    # 🎨 PIL Image Generation Engine (Premium Dark Matte Card)
-    W, H = 900, 300
-    card = Image.new("RGBA", (W, H), (20, 20, 27, 255))
+    # 🎨 TIKO STYLE HD BIG IMAGE GENERATOR (950x420 pixels for server text space)
+    W, H = 950, 420
+    card = Image.new("RGBA", (W, H), (245, 238, 227, 255)) # Soft Luxury Badami Background
     draw = ImageDraw.Draw(card)
     
-    # Glassmorphism aesthetic sub-panel
-    draw.rounded_rectangle([20, 20, W-20, H-20], radius=20, fill=(30, 32, 45, 255), outline=(50, 55, 75, 255), width=2)
+    # Cute Frosted Outer Border Frame
+    draw.rounded_rectangle([20, 20, W-20, H-20], radius=30, fill=(255, 254, 252, 130), outline=(185, 170, 150, 255), width=3)
     
-    # Draw Progress Bar Track
-    bar_x1, bar_y1, bar_x2, bar_y2 = 260, 210, 840, 235
-    draw.rounded_rectangle([bar_x1, bar_y1, bar_x2, bar_y2], radius=12, fill=(45, 48, 68, 255))
+    # Progress Bar Track (Pearl Muted Dark Beige)
+    bar_x1, bar_y1, bar_x2, bar_y2 = 320, 310, 900, 335
+    draw.rounded_rectangle([bar_x1, bar_y1, bar_x2, bar_y2], radius=12, fill=(215, 205, 192, 255))
     
-    # Draw Glowing Progress Bar Fill
+    # Rich Chocolate Solid Progress Fill
     progress = min(xp / next_xp, 1.0) if next_xp > 0 else 1.0
     if progress > 0:
         fill_x2 = bar_x1 + int((bar_x2 - bar_x1) * progress)
-        draw.rounded_rectangle([bar_x1, bar_y1, fill_x2, bar_y2], radius=12, fill=(114, 137, 218, 255))
+        draw.rounded_rectangle([bar_x1, bar_y1, fill_x2, bar_y2], radius=12, fill=(84, 62, 49, 255))
         
-    # Profile Picture Circular masking
+    # User Circular Avatar System (Upper Left Side Alignment)
     pfp_url = target.display_avatar.url
     pfp_res = requests.get(pfp_url)
-    pfp_img = Image.open(io.BytesIO(pfp_res.content)).convert("RGBA").resize((180, 180))
+    pfp_img = Image.open(io.BytesIO(pfp_res.content)).convert("RGBA").resize((210, 210))
     
-    mask = Image.new("L", (180, 180), 0)
+    mask = Image.new("L", (210, 210), 0)
     mask_draw = ImageDraw.Draw(mask)
-    mask_draw.ellipse((0, 0, 180, 180), fill=255)
+    mask_draw.ellipse((0, 0, 210, 210), fill=255)
     
-    pfp_circular = ImageOps.fit(pfp_img, (180, 180), centering=(0.5, 0.5))
-    card.paste(pfp_circular, (50, 60), mask=mask)
-    draw.ellipse((48, 58, 232, 242), outline=(114, 137, 218, 255), width=4) # Avatar Ring
+    pfp_circular = ImageOps.fit(pfp_img, (210, 210), centering=(0.5, 0.5))
+    card.paste(pfp_circular, (50, 50), mask=mask)
+    draw.ellipse((46, 46, 264, 264), outline=(150, 125, 105, 255), width=4) # Antique Ring Border
     
-    # Text Placement using default fallback font mechanics for platform safety
-    draw.text((260, 55), f"{target.name}", fill=(255, 255, 255, 255))
-    draw.text((260, 110), f"Level {lvl}  •  Rank #{rank_pos}", fill=(114, 137, 218, 255))
-    draw.text((260, 160), f"Wallet: ${bal:,}  •  XP: {xp}/{next_xp}", fill=(180, 185, 200, 255))
+    # ✒️ Serif Style / Elegant Text Alignment (High Contrast Coffee Charcoal)
+    draw.text((320, 45), f"@{target.name.lower()} ☕", fill=(54, 43, 38, 255), stroke_width=1)
+    draw.text((320, 105), f"Level: {lvl}  •  Server Rank: #{rank_pos} 🏆", fill=(125, 96, 81, 255))
+    draw.text((320, 155), f"Performance: {tier}", fill=(138, 105, 93, 255))
+    draw.text((320, 205), f"Experience: {xp} / {next_xp} XP 🌱", fill=(80, 72, 66, 255))
+    draw.text((320, 255), f"Total Chats Logged: {msg_count:,} messages 💬", fill=(105, 105, 100, 255))
     
-    # Byte buffer translation
+    # 🌟 Center Bottom Server Name Alignment
+    server_name = f"~ {interaction.guild.name.upper()} ~"
+    draw.text((W // 2 - 60, 370), server_name, fill=(160, 145, 130, 255))
+    
     fp = io.BytesIO()
     card.save(fp, "PNG")
     fp.seek(0)
@@ -298,9 +308,13 @@ async def on_message(message: discord.Message):
     if g_id not in db: db[g_id] = {}
     if "users" not in db[g_id]: db[g_id]["users"] = {}
     if u_id not in db[g_id]["users"]:
-        db[g_id]["users"][u_id] = {"xp": 0, "level": 1, "balance": 0}
+        db[g_id]["users"][u_id] = {"xp": 0, "level": 1, "balance": 0, "messages": 0}
         
     user_data = db[g_id]["users"][u_id]
+    
+    # 📈 Message counter tracker core activation
+    user_data["messages"] = user_data.get("messages", 0) + 1
+    
     old_lvl = user_data.get("level", 1)
     xp_gain = random.randint(15, 25)
     user_data["xp"] = user_data.get("xp", 0) + xp_gain
