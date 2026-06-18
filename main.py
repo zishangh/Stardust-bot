@@ -98,7 +98,7 @@ def generate_welcome_card(member):
         "𝖧𝖾𝗒 {mention}! (⁠◠⁠‿⁠◕⁠)\n\n"
         "*𝑾𝒆 𝒂𝒓𝒆 𝒔𝒐 𝒉𝒂𝒑𝒑𝒚 𝒕𝒐 𝒉𝒂𝒗𝒆 𝒚𝒐𝒖 𝒉𝒆𝒓𝒆!* (⁠≧⁠▽⁠≦⁠)\n"
         "*𝑮𝒓𝒂𝒃 𝒂 𝒄𝒖𝒑 𝒐𝒇 𝒄𝒐𝒇𝒇𝒆𝒆, 𝒄𝒉𝒊𝒍𝒍, 𝒂𝒏𝒅 𝒎𝒂𝒌𝒆 𝒏𝒆𝒘 𝒇𝒓𝒊𝒆𝒏𝒅𝒔!* (⁠✯⁠ᴗ⁠✯⁠)\n\n"
-        "📌 𝖣𝗈𝗇't 𝖿𝗈𝗋𝗀𝖾𝗍 𝗍𝗈 𝖼𝗁𝖾𝖼𝗄𝗑 𝗈𝗎𝗋 𝗋𝗎𝓵𝖾𝗌! (⁠◍⁠•⁠ᴗ⁠•⁠◍)\n\n"
+        "📌 𝖣𝗈𝗇't 𝖿𝗈𝗋𝗀𝖾𝗍 𝗍𝗈 𝖼𝗁𝖾𝖼𝗄𝗑 𝗈𝗎𝗋 𝗋𝗎𝓵𝒆𝒔! (⁠◍⁠•⁠ᴗ⁠•⁠◍)\n\n"
         "**Identity:** {name} | **Member Count:** #{count}"
     ).format(mention=member.mention, name=member.name, count=member.guild.member_count)
 
@@ -162,7 +162,7 @@ async def hug(interaction: discord.Interaction, member: discord.Member):
     await interaction.response.send_message(content=f"🫂 {interaction.user.mention} wraps their arms tightly around {member.mention}!", embed=embed)
 
 # =========================================================
-# 🛡️ MODULE 3: MODERATION SUITE (FIXED SYNTAX)
+# 🛡️ MODULE 3: MODERATION SUITE (FIXED BAN TYPO)
 # =========================================================
 
 @bot.tree.command(name="kick", description="🔒 Remove a user from the guild")
