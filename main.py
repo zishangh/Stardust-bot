@@ -133,11 +133,12 @@ async def reward_test(interaction: discord.Interaction):
                 f"*chat wage* ·  *lvl {random.randint(10, 45)}*\n\n"
                 f"*the right beat in the right second.*"
             )
-            await reward_channel.send(embed=embed)
+            # content= karke humne embed ke upar real ping attach kar diya hai
+            await reward_channel.send(content=interaction.user.mention, embed=embed)
             await interaction.response.send_message("Test reward embed triggered in reward channel.", ephemeral=True)
             return
     await interaction.response.send_message("Reward channel not configured ʘ⁠‿⁠ʘ Run `/reward-set` first.", ephemeral=True)
-        
+    
 # CLEAN DYNO STYLE ENGINE
 def generate_welcome_card(member):
     dyno_description = (
