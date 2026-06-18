@@ -60,7 +60,7 @@ async def on_ready():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.competing, name="Stardust Global Network 🌐"))
 
 # =========================================================
-# 🛠️ SYSTEM 1: CUSTOM DECORATED WELCOME SYSTEM
+# 🛠️ SYSTEM 1: DYNO-STYLE CLEAN WELCOME SYSTEM
 # =========================================================
 
 @bot.tree.command(name="welcome-set", description="⚙️ Map the greeting system to a text channel")
@@ -89,31 +89,27 @@ async def welcome_reset(interaction: discord.Interaction):
         embed = discord.Embed(description="Welcome configuration not active ʘ⁠‿⁠ʘ", color=discord.Color.orange())
     await interaction.response.send_message(embed=embed)
 
-# AAPKA CUSTOM WELCOME ENGINE TEMPLATE
+# CLEAN DYNO STYLE ENGINE
 def generate_welcome_card(member):
-    # Perfect custom design layout as requested
-    custom_description = (
+    # Dyno layout style: pura text simple aur continuous format me bina fields ke box tode
+    dyno_description = (
         "╭🎈━━━━━━━━━━━━━━━━━━━━━━━━━━╮\n"
         "   ⭐  *𝑾𝒆𝒍𝒄𝒐𝒎𝒆 𝒕𝒐 𝑺𝒕𝒂𝒓𝒅𝒖𝒔𝒕 𝑪𝒂𝒇𝒆!* ⭐\n"
         "╰━━━━━━━━━━━━━━━━━━━━━━━━━━🎈╯\n\n"
         "𝖧𝖾𝗒 {mention}! (⁠◠⁠‿⁠◕⁠)\n\n"
         "*𝑾𝒆 𝒂𝒓𝒆 𝒔𝒐 𝒉𝒂𝒑𝒑𝒚 𝒕𝒐 𝒉𝒂𝒗𝒆 𝒚𝒐𝒖 𝒉𝒆𝒓𝒆!* (⁠≧⁠▽⁠≦⁠)\n"
         "*𝑮𝒓𝒂𝒃 𝒂 𝒄𝒖𝒑 𝒐𝒇 𝒄𝒐𝒇𝒇𝒆𝒆, 𝒄𝒉𝒊𝒍𝒍, 𝒂𝒏𝒅 𝒎𝒂𝒌𝒆 𝒏𝒆𝒘 𝒇𝒓𝒊𝒆𝒏𝒅𝒔!* (⁠✯⁠ᴗ⁠✯⁠)\n\n"
-        "📌 𝖣𝗈𝗇'𝗍 𝖿𝗈𝗋𝗀𝖾𝗍 𝗍𝗈 𝖼Check 𝗈𝗎𝗋 𝗋𝗎𝗅𝖾𝗌! (⁠◍⁠•⁠ᴗ⁠•⁠◍)"
-    ).format(mention=member.mention)
+        "📌 𝖣𝗈𝗇'tf𝗈𝗋𝗀𝖾𝗍 𝗍𝗈 𝖼𝗁𝖾𝖼𝗄𝗑 𝗈𝗎𝗋 𝗋𝗎𝗅𝖾𝗌! (⁠◍⁠•⁠ᴗ⁠•⁠◍)\n\n"
+        "**Identity:** {name} | **Member Count:** #{count}"
+    ).format(mention=member.mention, name=member.name, count=member.guild.member_count)
 
     embed = discord.Embed(
-        description=custom_description,
-        color=discord.Color.from_rgb(255, 192, 203)
+        description=dyno_description,
+        color=discord.Color.from_rgb(47, 49, 54)  # Dyno native aesthetic dark color blend
     )
     
-    # Clean Single Line Stats Metadata
-    embed.add_field(name="Identity Protocol", value=f"**Tag:** {member.name} | **Count:** {member.guild.member_count}th member ◉⁠‿⁠◉", inline=False)
-    
-    # AAPKA CUSTOM REQUESTED COFFEE BANNER LINK
+    # Custom image link fixed perfectly
     embed.set_image(url="https://cdn.discordapp.com/attachments/1515969029708320778/1516977720138006632/CofeeManga__A_Popular_Platform_for_Manga_Enthusiasts.jpg?ex=6a349b18&is=6a334998&hm=9838ef43a2c5fc09352e6e954d910dd34aa675081c107d3e90ccf28594687cd9&")
-    embed.set_thumbnail(url=member.display_avatar.url)
-    embed.set_footer(text=f"Account Created: {member.created_at.strftime('%Y-%m-%d')} •_•")
     return embed
 
 @bot.tree.command(name="welcome-test", description="🧪 Trigger a simulated custom decorated welcome card event")
@@ -125,7 +121,7 @@ async def welcome_test(interaction: discord.Interaction):
         channel = interaction.guild.get_channel(db[g_id]["channel"])
         if channel:
             card = generate_welcome_card(interaction.user)
-            await channel.send(content=f"Welcome {interaction.user.mention} (⁠≧⁠▽⁠≦⁠) !", embed=card)
+            await channel.send(content=f"Welcome {interaction.user.mention}!", embed=card)
             await interaction.response.send_message("Test custom embed triggered.", ephemeral=True)
             return
     await interaction.response.send_message("Welcome channel not configured ʘ⁠‿⁠ʘ Run `/welcome-set` first.", ephemeral=True)
@@ -138,7 +134,7 @@ async def on_member_join(member: discord.Member):
         channel = member.guild.get_channel(db[g_id]["channel"])
         if channel:
             card = generate_welcome_card(member)
-            await channel.send(content=f"Welcome {member.mention} (⁠≧⁠▽⁠≦⁠) !", embed=card)
+            await channel.send(content=f"Welcome {member.mention}!", embed=card)
 
 @bot.event
 async def on_member_remove(member: discord.Member):
@@ -147,11 +143,11 @@ async def on_member_remove(member: discord.Member):
     if g_id in db and "channel" in db[g_id]:
         channel = member.guild.get_channel(db[g_id]["channel"])
         if channel:
-            embed = discord.Embed(description=f"💔 **{member.name}** left the server ʘ⁠‿⁠ʘ Total scale: {member.guild.member_count} members.", color=discord.Color.dark_gray())
+            embed = discord.Embed(description=f"💔 **{member.name}** left the server. Total scale: {member.guild.member_count} members.", color=discord.Color.dark_gray())
             await channel.send(embed=embed)
 
 # =========================================================
-# 🍧 MODULE 2: HIGH QUALITY FUN INTERACTIONS (GIF INTEGRATED)
+# 🍧 MODULE 2: FUN INTERACTIONS (GIF ENDPOINT FIXED)
 # =========================================================
 
 @bot.tree.command(name="serve", description="☕ Serve a fresh brewed cafe drink to a server member")
@@ -164,7 +160,8 @@ async def serve(interaction: discord.Interaction, member: discord.Member):
 @bot.tree.command(name="hug", description="🫂 Give a warm, cozy anime hug to someone")
 async def hug(interaction: discord.Interaction, member: discord.Member):
     embed = discord.Embed(title="Stardust Hug! (⁠≧⁠▽⁠≦⁠)", description=f"**Wholesome cozy vibes are traveling across channels!** 💖", color=discord.Color.from_rgb(255, 182, 193))
-    embed.set_image(url="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDJ0Y2c1amwzdWlh)3gxeGNidmxtMWd5dWQzYjU5dGtwcnF0OTY0bCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lrr9rHuoJOE0w/giphy.gif")
+    # Extra bracket hata kar clean link fix kar di hai
+    embed.set_image(url="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDJ0Y2c1amwzdWlhM3gxeGNidmxtMWd5dWQzYjU5dGtwcnF0OTY0bCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lrr9rHuoJOE0w/giphy.gif")
     embed.set_footer(text="Shared with love! (⁠•⁠‿⁠•⁠)")
     await interaction.response.send_message(content=f"🫂 {interaction.user.mention} wraps their arms tightly around {member.mention}!", embed=embed)
 
@@ -185,7 +182,7 @@ async def kick(interaction: discord.Interaction, member: discord.Member, reason:
 
 @bot.tree.command(name="ban", description="🚫 Blacklist and permanently ban a member")
 @commands.has_permissions(ban_members=True)
-async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
+async def ban(interaction: discord.Interaction, member: member.Member, reason: str = "No reason provided"):
     try:
         await member.ban(reason=reason)
         embed = discord.Embed(title="🚨 Member Banned", description=f"**{member.name}** data purged ʘ⁠‿⁠ʘ", color=discord.Color.dark_red())
