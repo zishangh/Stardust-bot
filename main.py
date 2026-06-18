@@ -6,6 +6,7 @@ from flask import Flask
 from threading import Thread
 import datetime
 import json
+import random
 
 # =========================================================
 # ⚙️ INFRASTRUCTURE LAYER (KEEP ALIVE & DB)
@@ -88,7 +89,36 @@ async def welcome_reset(interaction: discord.Interaction):
     else:
         embed = discord.Embed(description="Welcome configuration not active ʘ⁠‿⁠ʘ", color=discord.Color.orange())
     await interaction.response.send_message(embed=embed)
+# =========================================================
+# 💰 PREMIUM ECONOMY SLASH COMMANDS
+# =========================================================
 
+@bot.tree.command(name="reward-set", description="💰 Configure the reward/paycheck destination channel")
+@app_commands.checks.has_permissions(administrator=True)
+async def reward_set(interaction: discord.Interaction, channel: discord.TextChannel):
+    db = load_db()
+    g_id = str(interaction.guild.id)
+    if g_id not in db:
+        db[g_id] = {}
+    db[g_id]["reward_channel"] = channel.id
+    save_db(db)
+    
+    embed = discord.Embed(description=f"✨ **Premium Reward Engine Active!** Mapped to {channel.mention}.", color=discord.Color.gold())
+    await interaction.response.send_message(embed=embed)
+
+@bot.tree.command(name="reward-reset", description="❌ Wipe reward module settings")
+@app_commands.checks.has_permissions(administrator=True)
+async def reward_reset(interaction: discord.Interaction):
+    db = load_db()
+    g_id = str(interaction.guild.id)
+    if g_id in db and "reward_channel" in db[g_id]:
+        del db[g_id]["reward_channel"]
+        save_db(db)
+        embed = discord.Embed(description="Reward system deactivated successfully (⁠•⁠‿⁠•⁠)", color=discord.Color.red())
+    else:
+        embed = discord.Embed(description="Reward engine wasn't active on this server.", color=discord.Color.orange())
+    await interaction.response.send_message(embed=embed)
+    
 # CLEAN DYNO STYLE ENGINE
 def generate_welcome_card(member):
     dyno_description = (
