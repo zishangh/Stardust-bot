@@ -5,7 +5,7 @@ from flask import Flask
 from threading import Thread
 import datetime
 
-# Flask Setup (Render ke liye background support)
+# Flask Setup (To keep the bot alive on Render background)
 app = Flask('')
 
 @app.route('/')
@@ -37,71 +37,72 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name="Managing Stardust Cafe ☕"))
 
 # =========================================================
-# 🛠️ MODULE 1: HIGH-LEVEL MODERATION COMMANDS (Cute style)
+# 🛠️ MODULE 1: HIGH-LEVEL MODERATION COMMANDS (English)
 # =========================================================
 
 # 1. KICK COMMAND
-@bot.tree.command(name="kick", description="🔒 Kisi member ko server se kick karein")
+@bot.tree.command(name="kick", description="🔒 Kick a member from the server")
 @commands.has_permissions(kick_members=True)
 async def kick(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
     try:
         await member.kick(reason=reason)
         embed = discord.Embed(
-            title="🔨 Member Kicked!",
-            description=f"**{member.name}** ko server se nikal diya gaya hai.",
+            title="🔨 Member Kicked",
+            description=f"**{member.name}** has been successfully removed from the server.",
             color=discord.Color.red()
         )
         embed.add_field(name="Reason", value=reason)
         embed.set_footer(text="Stardust Security System ✨")
         await interaction.response.send_message(embed=embed)
     except Exception:
-        await interaction.response.send_message("❌ Mere paas is user ko kick karne ki permission nahi hai!", ephemeral=True)
+        await interaction.response.send_message("❌ Error: I do not have permission to kick this member.", ephemeral=True)
 
 # 2. BAN COMMAND
-@bot.tree.command(name="ban", description="🚫 Kisi member ko server se permanently ban karein")
+@bot.tree.command(name="ban", description="🚫 Permanently ban a member from the server")
 @commands.has_permissions(ban_members=True)
 async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
     try:
         await member.ban(reason=reason)
         embed = discord.Embed(
-            title="🚨 Member Banned!",
-            description=f"**{member.name}** ko hamesha ke liye ban kar diya gaya hai.",
+            title="🚨 Member Banned",
+            description=f"**{member.name}** has been permanently banned from the server.",
             color=discord.Color.dark_red()
         )
         embed.add_field(name="Reason", value=reason)
+        embed.set_footer(text="Stardust Security System ✨")
         await interaction.response.send_message(embed=embed)
     except Exception:
-        await interaction.response.send_message("❌ Galti hui! Check karein ki meri role sabse upar hai ya nahi.", ephemeral=True)
+        await interaction.response.send_message("❌ Error: Failed to ban. Please check my role hierarchy.", ephemeral=True)
 
 # 3. MUTE / TIMEOUT COMMAND
-@bot.tree.command(name="mute", description="🤫 Kisi member ko kuch samay ke liye mute (timeout) karein")
+@bot.tree.command(name="mute", description="🤫 Timeout a member for a specific duration")
 @commands.has_permissions(moderate_members=True)
 async def mute(interaction: discord.Interaction, member: discord.Member, minutes: int, reason: str = "No reason provided"):
     try:
         duration = datetime.timedelta(minutes=minutes)
         await member.timeout(duration, reason=reason)
         embed = discord.Embed(
-            title="🤫 Member Muted!",
-            description=f"**{member.mention}** ko `{minutes}` minutes ke liye shant kara diya gaya hai.",
+            title="🤫 Member Muted",
+            description=f"**{member.mention}** has been placed in timeout for `{minutes}` minutes.",
             color=discord.Color.orange()
         )
         embed.add_field(name="Reason", value=reason)
+        embed.set_footer(text="Stardust Security System ✨")
         await interaction.response.send_message(embed=embed)
     except Exception as e:
-        await interaction.response.send_message(f"❌ Mute nahi kar paya: {e}", ephemeral=True)
+        await interaction.response.send_message(f"❌ Error: Could not mute member: {e}", ephemeral=True)
 
 # =========================================================
 # 🍧 MODULE 2: CUTE & UNIQUE CAFE FEATURES
 # =========================================================
 
-@bot.tree.command(name="serve", description="☕ Apne kisi dost ko ek pyari si coffee bhein")
+@bot.tree.command(name="serve", description="☕ Serve a fresh, warm coffee to a friend")
 async def serve(interaction: discord.Interaction, member: discord.Member):
     embed = discord.Embed(
-        title="✨ Stardust Cafe Special Order! ✨",
-        description=f"{interaction.user.mention} ne {member.mention} ko ek garm-a-garm, pyari si **Stardust Special Coffee** serve ki hai! ☕🍰",
-        color=discord.Color.from_rgb(245, 222, 179) # Cafe theme color
+        title="✨ Stardust Cafe Special Order ✨",
+        description=f"{interaction.user.mention} has served a fresh, warm **Stardust Special Coffee** to {member.mention}! ☕🍰",
+        color=discord.Color.from_rgb(245, 222, 179)
     )
-    embed.set_image(url="https://i.imgur.com/🎵 placeholder link agar aage GIF lagani ho toh") # Hum aage gifs bhi add kar sakte hain!
     embed.set_footer(text="Have a cozy day at Stardust Cafe! 💕")
     await interaction.response.send_message(embed=embed)
 
@@ -109,19 +110,19 @@ async def serve(interaction: discord.Interaction, member: discord.Member):
 # 📜 MODULE 3: TOP LEVEL HELP & INFO MENU
 # =========================================================
 
-@bot.tree.command(name="help", description="📖 Stardust Bot ke saare advanced commands dekhein")
+@bot.tree.command(name="help", description="📖 View all available commands for Stardust Bot")
 async def help_command(interaction: discord.Interaction):
     embed = discord.Embed(
         title="✨ Stardust Cafe Bot - Premium Menu ✨",
-        description="Dyno se bhi zyadah cute aur professional! Niche mere commands diye gaye hain:",
+        description="Welcome! I am a premium utility and moderation bot built for your community. Here are my features:",
         color=discord.Color.blurple()
     )
-    embed.add_field(name="🛡️ Moderation Commands", value="`/kick` - Member nikalne ke liye\n`/ban` - Permanent ban ke liye\n`/mute` - Timeout dene ke liye (Minutes daal kar)", inline=False)
-    embed.add_field(name="☕ Cafe & Fun Commands", value="`/serve` - Kisi dost ko unique style mein coffee bhej kar khush karne ke liye\n`/ping` - Bot ki latency dekhne ke liye", inline=False)
-    embed.set_footer(text="Stardust Cafe Community ke liye kadi mehnat se banaya gaya hai 🌟")
+    embed.add_field(name="🛡️ Moderation System", value="`/kick` - Remove a disruptive member\n`/ban` - Permanently ban a user\n`/mute` - Timeout a user (specify minutes)", inline=False)
+    embed.add_field(name="☕ Cafe & Fun System", value="`/serve` - Serve a cute coffee to a server member\n`/ping` - Check bot's connection latency", inline=False)
+    embed.set_footer(text="Crafted with care for the Stardust Cafe Community 🌟")
     await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="ping", description="⚡ Bot ki speed test karein")
+@bot.tree.command(name="ping", description="⚡ Test the bot's reaction speed")
 async def ping(interaction: discord.Interaction):
     latency = round(bot.latency * 1000)
     await interaction.response.send_message(f"🏓 Pong! Latency is `{latency}ms` ✨")
