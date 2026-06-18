@@ -91,7 +91,6 @@ async def welcome_reset(interaction: discord.Interaction):
 
 # CLEAN DYNO STYLE ENGINE
 def generate_welcome_card(member):
-    # Dyno layout style: pura text simple aur continuous format me bina fields ke box tode
     dyno_description = (
         "╭🎈━━━━━━━━━━━━━━━━━━━━━━━━━━╮\n"
         "   ⭐  *𝑾𝒆𝒍𝒄𝒐𝒎𝒆 𝒕𝒐 𝑺𝒕𝒂𝒓𝒅𝒖𝒔𝒕 𝑪𝒂𝒇𝒆!* ⭐\n"
@@ -99,16 +98,14 @@ def generate_welcome_card(member):
         "𝖧𝖾𝗒 {mention}! (⁠◠⁠‿⁠◕⁠)\n\n"
         "*𝑾𝒆 𝒂𝒓𝒆 𝒔𝒐 𝒉𝒂𝒑𝒑𝒚 𝒕𝒐 𝒉𝒂𝒗𝒆 𝒚𝒐𝒖 𝒉𝒆𝒓𝒆!* (⁠≧⁠▽⁠≦⁠)\n"
         "*𝑮𝒓𝒂𝒃 𝒂 𝒄𝒖𝒑 𝒐𝒇 𝒄𝒐𝒇𝒇𝒆𝒆, 𝒄𝒉𝒊𝒍𝒍, 𝒂𝒏𝒅 𝒎𝒂𝒌𝒆 𝒏𝒆𝒘 𝒇𝒓𝒊𝒆𝒏𝒅𝒔!* (⁠✯⁠ᴗ⁠✯⁠)\n\n"
-        "📌 𝖣𝗈𝗇'tf𝗈𝗋𝗀𝖾𝗍 𝗍𝗈 𝖼𝗁𝖾𝖼𝗄𝗑 𝗈𝗎𝗋 𝗋𝗎𝗅𝖾𝗌! (⁠◍⁠•⁠ᴗ⁠•⁠◍)\n\n"
+        "📌 𝖣𝗈𝗇't 𝖿𝗈𝗋𝗀𝖾𝗍 𝗍𝗈 𝖼𝗁𝖾𝖼𝗄𝗑 𝗈𝗎𝗋 𝗋𝗎𝓵𝖾𝗌! (⁠◍⁠•⁠ᴗ⁠•⁠◍)\n\n"
         "**Identity:** {name} | **Member Count:** #{count}"
     ).format(mention=member.mention, name=member.name, count=member.guild.member_count)
 
     embed = discord.Embed(
         description=dyno_description,
-        color=discord.Color.from_rgb(47, 49, 54)  # Dyno native aesthetic dark color blend
+        color=discord.Color.from_rgb(47, 49, 54)
     )
-    
-    # Custom image link fixed perfectly
     embed.set_image(url="https://cdn.discordapp.com/attachments/1515969029708320778/1516977720138006632/CofeeManga__A_Popular_Platform_for_Manga_Enthusiasts.jpg?ex=6a349b18&is=6a334998&hm=9838ef43a2c5fc09352e6e954d910dd34aa675081c107d3e90ccf28594687cd9&")
     return embed
 
@@ -160,13 +157,12 @@ async def serve(interaction: discord.Interaction, member: discord.Member):
 @bot.tree.command(name="hug", description="🫂 Give a warm, cozy anime hug to someone")
 async def hug(interaction: discord.Interaction, member: discord.Member):
     embed = discord.Embed(title="Stardust Hug! (⁠≧⁠▽⁠≦⁠)", description=f"**Wholesome cozy vibes are traveling across channels!** 💖", color=discord.Color.from_rgb(255, 182, 193))
-    # Extra bracket hata kar clean link fix kar di hai
     embed.set_image(url="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDJ0Y2c1amwzdWlhM3gxeGNidmxtMWd5dWQzYjU5dGtwcnF0OTY0bCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lrr9rHuoJOE0w/giphy.gif")
     embed.set_footer(text="Shared with love! (⁠•⁠‿⁠•⁠)")
     await interaction.response.send_message(content=f"🫂 {interaction.user.mention} wraps their arms tightly around {member.mention}!", embed=embed)
 
 # =========================================================
-# 🛡️ MODULE 3: MODERATION SUITE
+# 🛡️ MODULE 3: MODERATION SUITE (FIXED SYNTAX)
 # =========================================================
 
 @bot.tree.command(name="kick", description="🔒 Remove a user from the guild")
@@ -182,7 +178,7 @@ async def kick(interaction: discord.Interaction, member: discord.Member, reason:
 
 @bot.tree.command(name="ban", description="🚫 Blacklist and permanently ban a member")
 @commands.has_permissions(ban_members=True)
-async def ban(interaction: discord.Interaction, member: member.Member, reason: str = "No reason provided"):
+async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
     try:
         await member.ban(reason=reason)
         embed = discord.Embed(title="🚨 Member Banned", description=f"**{member.name}** data purged ʘ⁠‿⁠ʘ", color=discord.Color.dark_red())
