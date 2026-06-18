@@ -13,10 +13,12 @@ def home():
     return "Stardust Cafe Bot is running perfectly!"
 
 def run():
+    # Adding threaded execution to prevent blocking
     app.run(host='0.0.0.0', port=8080)
 
 def keep_alive():
     t = Thread(target=run)
+    t.daemon = True  # Background thread management
     t.start()
 
 # Bot Setup with High-Level Permissions
@@ -30,6 +32,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f'Logged in as {bot.user.name}')
     try:
+        # Force syncing global commands instantly
         synced = await bot.tree.sync()
         print(f"Successfully synced {len(synced)} slash command(s) globally!")
     except Exception as e:
@@ -101,11 +104,8 @@ async def serve(interaction: discord.Interaction, member: discord.Member):
         description=f"**A fresh, warm coffee has been freshly brewed and served!** ☕🍰",
         color=discord.Color.from_rgb(245, 222, 179)
     )
-    # High quality anime restaurant coffee serving GIF
     embed.set_image(url="https://media.tenor.com/7S8Y-Xshg3YAAAAC/anime-coffee.gif")
     embed.set_footer(text="Have a cozy day at Stardust Cafe! 💕")
-    
-    # Text content ke andar ping daala hai taaki NekoBot ki tarah proper blue ping ho!
     await interaction.response.send_message(content=f"☕ {interaction.user.mention} serves a delicious coffee to {member.mention}!", embed=embed)
 
 # 2. HUG COMMAND (Premium Anime Hug GIF)
@@ -116,11 +116,8 @@ async def hug(interaction: discord.Interaction, member: discord.Member):
         description=f"**Sending cute, cozy and wholesome vibes across the server!** 💖",
         color=discord.Color.from_rgb(255, 182, 193)
     )
-    # Super cute premium anime couple hugging GIF
     embed.set_image(url="https://media.tenor.com/v8t_P6K3L48AAAAC/anime-hug.gif")
     embed.set_footer(text="Shared with love in Stardust Cafe! ✨")
-    
-    # Text content mein main pings daal diye hain jo ekdum perfect kaam karenge
     await interaction.response.send_message(content=f"🫂 {interaction.user.mention} wraps their arms tightly around {member.mention}!", embed=embed)
 
 # =========================================================
@@ -144,7 +141,7 @@ async def ping(interaction: discord.Interaction):
     latency = round(bot.latency * 1000)
     await interaction.response.send_message(f"🏓 Pong! Latency is `{latency}ms` ✨")
 
-# Bot Deployment
+# Bot Deployment (Correct Order)
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
 if token:
