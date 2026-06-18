@@ -180,11 +180,10 @@ async def rank(interaction: discord.Interaction, member: discord.Member = None):
     msg_count = user_data.get("messages", int(xp / 20) + 1)
     next_xp = lvl * 375
     
-    # 🏅 Performance Level Tier Calculator
-    if lvl >= 50: tier = "Grandmaster ✨"
-    elif lvl >= 25: tier = "Elite Vibe 💫"
-    elif lvl >= 10: tier = "Gold Member 🌟"
-    else: tier = "Rising Star 🌱"
+    if lvl >= 50: tier = "Grandmaster"
+    elif lvl >= 25: tier = "Elite Vibe"
+    elif lvl >= 10: tier = "Gold Member"
+    else: tier = "Rising Star"
 
     server_users = db.get(g_id, {}).get("users", {})
     sorted_users = sorted(server_users.items(), key=lambda x: x[1].get("xp", 0), reverse=True)
@@ -194,25 +193,22 @@ async def rank(interaction: discord.Interaction, member: discord.Member = None):
             rank_pos = index + 1
             break
 
-    # 🎨 TIKO STYLE HD BIG IMAGE GENERATOR (950x420 pixels for server text space)
     W, H = 950, 420
-    card = Image.new("RGBA", (W, H), (245, 238, 227, 255)) # Soft Luxury Badami Background
+    card = Image.new("RGBA", (W, H), (245, 238, 227, 255)) 
     draw = ImageDraw.Draw(card)
     
-    # Cute Frosted Outer Border Frame
+    # Outer Border Frame
     draw.rounded_rectangle([20, 20, W-20, H-20], radius=30, fill=(255, 254, 252, 130), outline=(185, 170, 150, 255), width=3)
     
-    # Progress Bar Track (Pearl Muted Dark Beige)
+    # Progress Bar Track
     bar_x1, bar_y1, bar_x2, bar_y2 = 320, 310, 900, 335
     draw.rounded_rectangle([bar_x1, bar_y1, bar_x2, bar_y2], radius=12, fill=(215, 205, 192, 255))
     
-    # Rich Chocolate Solid Progress Fill
     progress = min(xp / next_xp, 1.0) if next_xp > 0 else 1.0
     if progress > 0:
         fill_x2 = bar_x1 + int((bar_x2 - bar_x1) * progress)
         draw.rounded_rectangle([bar_x1, bar_y1, fill_x2, bar_y2], radius=12, fill=(84, 62, 49, 255))
         
-    # User Circular Avatar System (Upper Left Side Alignment)
     pfp_url = target.display_avatar.url
     pfp_res = requests.get(pfp_url)
     pfp_img = Image.open(io.BytesIO(pfp_res.content)).convert("RGBA").resize((210, 210))
@@ -223,18 +219,44 @@ async def rank(interaction: discord.Interaction, member: discord.Member = None):
     
     pfp_circular = ImageOps.fit(pfp_img, (210, 210), centering=(0.5, 0.5))
     card.paste(pfp_circular, (50, 50), mask=mask)
-    draw.ellipse((46, 46, 264, 264), outline=(150, 125, 105, 255), width=4) # Antique Ring Border
+    draw.ellipse((46, 46, 264, 264), outline=(150, 125, 105, 255), width=4)
     
-    # ✒️ Serif Style / Elegant Text Alignment (High Contrast Coffee Charcoal)
-    draw.text((320, 45), f"@{target.name.lower()} ☕", fill=(54, 43, 38, 255), stroke_width=1)
-    draw.text((320, 105), f"Level: {lvl}  •  Server Rank: #{rank_pos} 🏆", fill=(125, 96, 81, 255))
-    draw.text((320, 155), f"Performance: {tier}", fill=(138, 105, 93, 255))
-    draw.text((320, 205), f"Experience: {xp} / {next_xp} XP 🌱", fill=(80, 72, 66, 255))
-    draw.text((320, 255), f"Total Chats Logged: {msg_count:,} messages 💬", fill=(105, 105, 100, 255))
+    # ✒️ Load Professional Bold Serif System Font
+    font_paths = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf",
+        "DejaVuSerif-Bold.ttf"
+    ]
     
-    # 🌟 Center Bottom Server Name Alignment
+    title_font = None
+    body_font = None
+    
+    for path in font_paths:
+        try:
+            title_font = ImageFont.truetype(path, 36)
+            body_font = ImageFont.truetype(path, 26)
+            break
+        except Exception:
+            continue
+            
+    # Fallback to default enlarged size if system path fails
+    if not title_font:
+        title_font = ImageFont.load_default()
+        body_font = ImageFont.load_default()
+
+    # Premium Dark Coffee Charcoal Color
+    text_color = (44, 34, 30, 255)
+    sub_color = (74, 58, 50, 255)
+    
+    # Text Placement with Clean Sizes
+    draw.text((320, 45), f"@{target.name.lower()}", fill=text_color, font=title_font)
+    draw.text((320, 110), f"Level: {lvl}  •  Server Rank: #{rank_pos}", fill=sub_color, font=body_font)
+    draw.text((320, 160), f"Performance: {tier}", fill=sub_color, font=body_font)
+    draw.text((320, 210), f"Experience: {xp} / {next_xp} XP", fill=sub_color, font=body_font)
+    draw.text((320, 260), f"Total Chats Logged: {msg_count:,} messages", fill=sub_color, font=body_font)
+    
     server_name = f"~ {interaction.guild.name.upper()} ~"
-    draw.text((W // 2 - 60, 370), server_name, fill=(160, 145, 130, 255))
+    draw.text((W // 2 - 110, 370), server_name, fill=(115, 95, 80, 255), font=body_font)
     
     fp = io.BytesIO()
     card.save(fp, "PNG")
@@ -312,7 +334,7 @@ async def on_message(message: discord.Message):
         
     user_data = db[g_id]["users"][u_id]
     
-    # 📈 Message counter tracker activation
+    # 📈 Message counter tracker core activation
     user_data["messages"] = user_data.get("messages", 0) + 1
     
     old_lvl = user_data.get("level", 1)
@@ -331,7 +353,7 @@ async def on_message(message: discord.Message):
             if lvl_channel:
                 # 🎨 TIKO STYLE AUTOMATIC LEVEL UP HD POSTER (950x320)
                 W, H = 950, 320
-                lvl_card = Image.new("RGBA", (W, H), (245, 238, 227, 255)) # Premium Badami Background
+                lvl_card = Image.new("RGBA", (W, H), (245, 238, 227, 255)) 
                 l_draw = ImageDraw.Draw(lvl_card)
                 
                 # Frosted Outer Frame
@@ -349,18 +371,43 @@ async def on_message(message: discord.Message):
                     
                     pfp_circular = ImageOps.fit(pfp_img, (180, 180), centering=(0.5, 0.5))
                     lvl_card.paste(pfp_circular, (50, 70), mask=mask)
-                    l_draw.ellipse((46, 66, 234, 254), outline=(138, 105, 93, 255), width=4) # Inner ring
+                    l_draw.ellipse((46, 66, 234, 254), outline=(138, 105, 93, 255), width=4)
                 except Exception:
-                    pass # Fallback if avatar fails to fetch
+                    pass
                 
-                # ✒️ Elegant Serif Text Placement (Coffee Charcoal Color)
-                l_draw.text((270, 70), "✨ LEVEL UP! ✨", fill=(84, 62, 49, 255), stroke_width=1)
-                l_draw.text((270, 135), f"@{message.author.name.lower()} has reached", fill=(125, 96, 81, 255))
-                l_draw.text((270, 190), f"LEVEL {new_lvl} 🏆", fill=(54, 43, 38, 255), stroke_width=1)
+                # ✒️ Load Professional Bold Serif System Font
+                font_paths = [
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",
+                    "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf",
+                    "DejaVuSerif-Bold.ttf"
+                ]
                 
-                # Center Bottom Server Badge
+                title_font = None
+                body_font = None
+                
+                for path in font_paths:
+                    try:
+                        title_font = ImageFont.truetype(path, 38)
+                        body_font = ImageFont.truetype(path, 26)
+                        break
+                    except Exception:
+                        continue
+                        
+                if not title_font:
+                    title_font = ImageFont.load_default()
+                    body_font = ImageFont.load_default()
+
+                # Premium High Contrast Solid Colors (No boxes, no distortion)
+                text_color = (44, 34, 30, 255)
+                sub_color = (74, 58, 50, 255)
+                
+                # Serif Straight Typography
+                l_draw.text((270, 65), "LEVEL UP!", fill=text_color, font=title_font)
+                l_draw.text((270, 130), f"@{message.author.name.lower()} has reached", fill=sub_color, font=body_font)
+                l_draw.text((270, 185), f"LEVEL {new_lvl}", fill=text_color, font=title_font)
+                
                 s_name = f"~ {message.guild.name.upper()} ~"
-                l_draw.text((W // 2 - 50, 275), s_name, fill=(160, 145, 130, 255))
+                l_draw.text((W // 2 - 110, 270), s_name, fill=(115, 95, 80, 255), font=body_font)
                 
                 fp = io.BytesIO()
                 lvl_card.save(fp, "PNG")
