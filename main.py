@@ -117,8 +117,7 @@ async def reward_reset(interaction: discord.Interaction):
         embed = discord.Embed(description="Reward system deactivated successfully (⁠•⁠‿⁠•⁠)", color=discord.Color.red())
     else:
         embed = discord.Embed(description="Reward engine wasn't active on this server.", color=discord.Color.orange())
-    await interaction.response.send_message(embed=embed)
-    @bot.tree.command(name="reward-test", description="🧪 Trigger a simulated custom economy reward card event")
+@bot.tree.command(name="reward-test", description="🧪 Trigger a simulated custom economy reward card event")
 @app_commands.checks.has_permissions(administrator=True)
 async def reward_test(interaction: discord.Interaction):
     db = load_db()
@@ -138,7 +137,7 @@ async def reward_test(interaction: discord.Interaction):
             await interaction.response.send_message("Test reward embed triggered in reward channel.", ephemeral=True)
             return
     await interaction.response.send_message("Reward channel not configured ʘ⁠‿⁠ʘ Run `/reward-set` first.", ephemeral=True)
-    
+        
 # CLEAN DYNO STYLE ENGINE
 def generate_welcome_card(member):
     dyno_description = (
