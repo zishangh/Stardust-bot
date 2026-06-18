@@ -118,10 +118,23 @@ async def help_command(interaction: discord.Interaction):
         color=discord.Color.blurple()
     )
     embed.add_field(name="🛡️ Moderation System", value="`/kick` - Remove a disruptive member\n`/ban` - Permanently ban a user\n`/mute` - Timeout a user (specify minutes)", inline=False)
-    embed.add_field(name="☕ Cafe & Fun System", value="`/serve` - Serve a cute coffee to a server member\n`/ping` - Check bot's connection latency", inline=False)
+     embed.add_field(name="☕ Cafe & Fun System", value="`/serve` - Serve a cute coffee to a member\n`/hug` - Give a warm anime hug with a cute GIF\n`/ping` - Check bot's connection speed", inline=False)
     embed.set_footer(text="Crafted with care for the Stardust Cafe Community 🌟")
     await interaction.response.send_message(embed=embed)
-
+# =========================================================
+# 🫂 CUTE FEATURE: ANIME HUG COMMAND WITH GIF
+# =========================================================
+@bot.tree.command(name="hug", description="🫂 Give a warm anime hug to a server member")
+async def hug(interaction: discord.Interaction, member: discord.Member):
+    embed = discord.Embed(
+        title="✨ Stardust Hug! ✨"
+        description=f"{interaction.user.mention} wraps their arms around {member.mention} and gives them a tight, cozy hug! 💕",
+        color=discord.Color.from_rgb(255, 182, 193) # Premium soft pink color
+    )
+    # High-quality cute anime couple hugging GIF
+    embed.set_image(url="https://media.tenor.com/jRda_V9X76UAAAAC/anime-hug.gif")
+    embed.set_footer(text="Shared with love in Stardust Cafe! ✨")
+    await interaction.response.send_message(embed=embed)
 @bot.tree.command(name="ping", description="⚡ Test the bot's reaction speed")
 async def ping(interaction: discord.Interaction):
     latency = round(bot.latency * 1000)
