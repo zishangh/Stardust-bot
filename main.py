@@ -492,7 +492,7 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
 
     selected = menu_data.get(item)
     
-    # 💰 ============ ECONOMY LINKING SYSTEM ============
+    # 💰 ECONOMY SYSTEM
     prices = {
         "coffee": 50, "donuts": 60, "cold_drink": 70, "burger": 100, "pizza": 120, "indian_spicy": 150,
         "japan_mochi": 180, "mexico_quesadilla": 200, "france_croissant": 220, "italy_pasta": 250,
@@ -516,7 +516,6 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
         
     eco_data[user_id]["balance"] -= item_cost
     save_economy(eco_data)
-    # ===================================================
 
     desc_template = (
         f"**👑 International Order Fulfilled!**\n\n"
@@ -537,6 +536,19 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
     content_text = f"🛎️ {member.mention}, you have been served a premium meal!"
     await interaction.followup.send(content=content_text, embed=embed)
 
+# 🫂 HUG COMMAND (RESTORED)
+@bot.tree.command(name="hug", description="🤗 Give a warm hug to another member")
+@discord.app_commands.describe(member="The member you want to hug")
+async def hug(interaction: discord.Interaction, member: discord.Member):
+    if member.id == interaction.user.id:
+        await interaction.response.send_message("🤗 Aapne khud ko hi gale laga liya! Cute!")
+        return
+        
+    embed = discord.Embed(
+        description=f"🤗 {interaction.user.mention} ne {member.mention} ko ek bohot pyaara aur warm hug diya!",
+        color=discord.Color.blurple()
+    )
+    await interaction.response.send_message(embed=embed)
 
     
 # =========================================================
