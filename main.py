@@ -624,6 +624,9 @@ def save_economy(data):
         json.dump(data, f, indent=4)
 
 def check_account(user_id: str, data):
+    if user_id not in data:
+        data[user_id] = {"balance": 0, "last_daily": 0}
+    return data
 
 @bot.tree.command(name="daily", description="🎁 Claim your daily premium Stardust Rewards!")
 async def daily(interaction: discord.Interaction):
