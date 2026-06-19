@@ -1122,6 +1122,142 @@ async def gstart(interaction: discord.Interaction, duration: str, winners: int, 
 async def gstart_error(interaction: discord.Interaction, error):
     if isinstance(error, discord.app_commands.errors.MissingPermissions):
         await interaction.response.send_message("❌ **Permission Denied!** You need `Manage Server` permissions to host giveaways.", ephemeral=True)
+# ==============================================================================
+# 🛡️ MODULE 7.0: AUTOMOD & ADVANCED MODERATION SUITE
+# ==============================================================================
+
+# 1. AUTOMOD SYSTEM (Banned Words List)
+# Aap is list me apni marzi se aur bhi words comma (,) laga kar jod sakte hain
+BANNED_WORDS = ["badword1", "badword2", "fuck", "bitch", "asshole", "slut"]
+
+@bot.event
+async def on_message(message: discord.Message):
+    # Agar message bot ka apna hai toh ignore karein
+    if message.author.bot:
+        return
+
+    # Check if message contains any banned word
+    content_lower = message.content.lower()
+    for word in BANNED_WORDS:
+        if word in content_lower:
+            try:
+                await message.delete()
+                
+                # Send warning embed in chat
+                embed = discord.Embed(
+                    title="🛡️ AutoMod Protection",
+                    description=f"⚠️ {message.author.mention}, your message was automatically removed because it contained blocked or inappropriate language.",
+                    color=discord.Color.from_rgb(255, 69, 0)
+                )
+                warn_msg = await message.channel.send(embed=embed)
+                # 5 seconds baad warning message ko delete kar dega taaki chat clean rahe
+                await asyncio.sleep(5)
+                await warn_msg.delete()
+                return
+            except discord.Forbidden:
+                print(f"Missing permissions to delete message in {message.channel.name}")
+            except Exception as e:
+                print(f"Error in AutoMod: {e}")
+
+    # Yeh line zaroori hai taaki baki normal commands bhi chalte rahein
+    await bot.process_commands(message)
+
+
+# 2. ADD ROLE COMMAND
+@bot.tree.command(name="addrole", description="➕ Give a server role to a member safely.")
+@discord.app_commands.describe(member="The member to receive the role", role="The role you want to give")
+@discord.app_commands.checks.has_permissions(manage_roles=True)
+async def addrole(interaction: discord.Interaction, member: discord.Member, role: discord.Role):
+    await interaction.response.defer()
+    
+    # Check bot role hierarchy
+    if role >= interaction.guild.me.top_role:
+        return await interaction.followup.send("❌ **Permission Error:** That role is higher than my bot's highest role! Move my role up in server settings.", ephemeral=True)
+        
+    try:
+        await member.add_roles(role)
+        embed = discord.Embed(
+            title="✨ Role Granted ✨",
+            description=f"Successfully assigned the role {role.mention} to **{member.display_name}**!",
+            color=discord.Color.from_rgb(50, 205, 50)
+        )
+        embed.set_footer(text=f"Moderator: {interaction.user.display_name}")
+        await interaction.followup.send(embed=embed)
+    except discord.Forbidden:
+        await interaction.followup.send("❌ I do not have permission to manage this role.", ephemeral=True)
+
+
+# 3. REMOVE ROLE COMMAND
+@bot.tree.command(name="removerole", description="➖ Take away a server role from a member.")
+@discord.app_commands.describe(member="The member whose role will be removed", role="The role you want to remove")
+@discord.app_commands.checks.has_permissions(manage_roles=True)
+async def removerole(interaction: discord.Interaction, member: discord.Member, role: discord.Role):
+    await interaction.response.defer()
+    
+    if role >= interaction.guild.me.top_role:
+        return await interaction.followup.send("❌ **Permission Error:** That role is higher than my bot's highest role!", ephemeral=True)
+        
+    try:
+        await member.remove_roles(role)
+        embed = discord.Embed(
+            title="✨ Role Removed ✨",
+            description=f"Successfully removed the role {role.mention} from **{member.display_name}**.",
+            color=discord.Color.from_rgb(255, 99, 71)
+        )
+        embed.set_footer(text=f"Moderator: {interaction.user.display_name}")
+        await interaction.followup.send(embed=embed)
+    except discord.Forbidden:
+        await interaction.followup.send("❌ I do not have permission to modify this role.", ephemeral=True)
+
+
+# 4. WARN COMMAND
+@bot.tree.command(name="warn", description="⚠️ Issue a formal warning to a rule breaker.")
+@discord.app_commands.describe(member="The member to warn", reason="The reason for the warning")
+@discord.app_commands.checks.has_permissions(kick_members=True)
+async def warn(interaction: discord.Interaction, member: discord.Member, reason: str):
+    if member.id == interaction.user.id:
+        return await interaction.response.send_message("❌ You cannot warn yourself!", ephemeral=True)
+    if member.bot:
+        return await interaction.response.send_message("❌ You cannot warn a bot!", ephemeral=True)
+        
+    await interaction.response.defer()
+    
+    # Public warning card in the server channel
+    server_embed = discord.Embed(
+        title="⚠️ Member Formally Warned ⚠️",
+        description=f"**User:** {member.mention} (`{member.id}`)\n"
+                    f"**Reason:** {reason}\n"
+                    f"**Moderator:** {interaction.user.mention}",
+        color=discord.Color.from_rgb(255, 140, 0)
+    )
+    server_embed.set_timestamp()
+    await interaction.followup.send(embed=server_embed)
+    
+    # Attempt to DM the user to notify them privately
+    try:
+        dm_embed = discord.Embed(
+            title=f"⚠️ Warning Notification from {interaction.guild.name}",
+            description=f"You have been issued a formal warning.\n\n"
+                        f"📝 **Reason:** {reason}\n"
+                        f"🛡️ Please review the server rules to avoid further moderation actions (mute/kick/ban).",
+            color=discord.Color.orange()
+        )
+        await member.send(embed=dm_embed)
+    except discord.Forbidden:
+        # User has DMs closed, safe to ignore
+        pass
+
+# Error handlers for permission checks
+@addrole.error
+@removerole.error
+async def role_error(interaction: discord.Interaction, error):
+    if isinstance(error, discord.app_commands.errors.MissingPermissions):
+        await interaction.response.send_message("❌ **Permission Denied!** You need `Manage Roles` permission to run this command.", ephemeral=True)
+
+@warn.error
+async def warn_error(interaction: discord.Interaction, error):
+    if isinstance(error, discord.app_commands.errors.MissingPermissions):
+        await interaction.response.send_message("❌ **Permission Denied!** You need `Kick Members` permission to warn users.", ephemeral=True)
 
 # Deploy System Launch Configuration
 keep_alive()
