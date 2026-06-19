@@ -439,80 +439,149 @@ async def on_message(message: discord.Message):
 # ☕ MODULE 2: FUN INTERACTIONS (PREMIUM GIF SERVING ENGINE)
 # ====================================================================
 
-@bot.tree.command(name="serve", description="🍽️ Serve a premium aesthetic food item from the Stardust Cafe")
+@bot.tree.command(name="serve", description="🍽️ Serve a premium global aesthetic food item from the Stardust Cafe")
 @discord.app_commands.describe(
-    item="Choose the premium item to serve",
+    item="Choose the premium international item to serve",
     member="The customer who will receive this delicious treat"
 )
 @discord.app_commands.choices(item=[
+    # Original Menu
     discord.app_commands.Choice(name="☕ Barista Coffee", value="coffee"),
     discord.app_commands.Choice(name="🍕 Woodfired Pizza", value="pizza"),
     discord.app_commands.Choice(name="🍔 Gourmet Burger", value="burger"),
     discord.app_commands.Choice(name="🥤 Chilled Drink", value="cold_drink"),
     discord.app_commands.Choice(name="🍛 Royal Indian Curry", value="indian_spicy"),
-    discord.app_commands.Choice(name="🍩 Glazed Donuts", value="donuts")
+    discord.app_commands.Choice(name="🍩 Glazed Donuts", value="donuts"),
+    # New 10 International Countries Menu
+    discord.app_commands.Choice(name="🍣 Japan: Premium Sushi Platter", value="japan_sushi"),
+    discord.app_commands.Choice(name="🌮 Mexico: Crispy Loaded Tacos", value="mexico_tacos"),
+    discord.app_commands.Choice(name="🥐 France: Butter Croissant & Cafe", value="france_croissant"),
+    discord.app_commands.Choice(name="🍝 Italy: Creamy Alfredo Pasta", value="italy_pasta"),
+    discord.app_commands.Choice(name="🇨🇳 China: Steamed Dim Sum Box", value="china_dimsum"),
+    discord.app_commands.Choice(name="🇹🇷 Turkey: Authentic Doner Kebab", value="turkey_kebab"),
+    discord.app_commands.Choice(name="🇰🇷 South Korea: Spicy Rice Cakes (Tteokbokki)", value="korea_tteokbokki"),
+    discord.app_commands.Choice(name="🇹🇭 Thailand: Tangy Pad Thai Noodles", value="thailand_padthai"),
+    discord.app_commands.Choice(name="🇪🇸 Spain: Saffron Seafood Paella", value="spain_paella"),
+    discord.app_commands.Choice(name="🇺🇸 USA: Smoked BBQ Brisket", value="usa_bbq")
 ])
 async def serve(interaction: discord.Interaction, item: str, member: discord.Member):
     await interaction.response.defer()
     
     menu_data = {
         "coffee": {
-            "title": "☕ ─── STARDUST PREMIUM BARISTA ─── ☕",
-            "desc": f"**Premium Order Fulfilled!** ✨\n\n"
-                    f"**Customer:** {member.mention}\n"
-                    f"**Item Served:** `Freshly Brewed Barista Coffee` ☕\n\n"
-                    f"*A warm, aromatic blend crafted with golden coffee beans and premium cream froth. Served hot just for you!* 🌸\n\n"
-                    f"─── *Have a cozy and beautiful day!* ───"
+            "title": "☕ STARDUST PREMIUM BARISTA",
+            "item_name": "Freshly Brewed Barista Coffee",
+            "origin": "Stardust Cafe House Blend ✨",
+            "line": "A warm, aromatic blend crafted with golden coffee beans and premium cream froth. Served hot just for you! 🌸"
         },
         "pizza": {
-            "title": "🍕 ─── WOODFIRED ITALIAN DELIGHT ─── 🍕",
-            "desc": f"**Premium Order Fulfilled!** ✨\n\n"
-                    f"**Customer:** {member.mention}\n"
-                    f"**Item Served:** `Authentic Woodfired Pizza` 🍕\n\n"
-                    f"*A piping hot crust loaded with premium stretching mozzarella, fresh basil, and signature rich marinara sauce!* 🧀\n\n"
-                    f"─── *Enjoy your cheesy slice of heaven!* ───"
+            "title": "🍕 WOODFIRED ITALIAN DELIGHT",
+            "item_name": "Authentic Woodfired Pizza",
+            "origin": "Naples Heritage 🇮🇹",
+            "line": "A piping hot crust loaded with premium stretching mozzarella, fresh basil, and signature rich marinara sauce! 🧀"
         },
         "burger": {
-            "title": "🍔 ─── CLASSIC GOURMET STACK ─── 🍔",
-            "desc": f"**Premium Order Fulfilled!** ✨\n\n"
-                    f"**Customer:** {member.mention}\n"
-                    f"**Item Served:** `Gourmet Crispy Stack Burger` 🍔\n\n"
-                    f"*A giant, juicy premium patty layered with melting cheddar, crunchy lettuce, and a secret smoky chef's sauce!* 🥓\n\n"
-                    f"─── *Take a massive, delicious bite!* ───"
+            "title": "🍔 CLASSIC GOURMET STACK",
+            "item_name": "Gourmet Crispy Stack Burger",
+            "origin": "Chef's Special 🧑‍🍳",
+            "line": "A giant, juicy premium patty layered with melting cheddar, crunchy lettuce, and a secret smoky chef's sauce! 🥓"
         },
         "cold_drink": {
-            "title": "🥤 ─── ICY REFRESHING BLISS ─── 🥤",
-            "desc": f"**Premium Order Fulfilled!** ✨\n\n"
-                    f"**Customer:** {member.mention}\n"
-                    f"**Item Served:** `Chilled Bubble Icy Soda` 🥤\n\n"
-                    f"*An absolute freeze experience! A crystal-clear sparkling beverage bubbling with icy freshness to cool your soul.* 🧊\n\n"
-                    f"─── *Take a deep, refreshing sip!* ───"
+            "title": "🥤 ICY REFRESHING BLISS",
+            "item_name": "Chilled Bubble Icy Soda",
+            "origin": "Arctic Frost Edition 🧊",
+            "line": "An absolute freeze experience! A crystal-clear sparkling beverage bubbling with icy freshness to cool your soul."
         },
         "indian_spicy": {
-            "title": "🍛 ─── ROYAL INDIAN SPICE PLATTER ─── 🍛",
-            "desc": f"**Premium Order Fulfilled!** ✨\n\n"
-                    f"**Customer:** {member.mention}\n"
-                    f"**Item Served:** `Aromatic Royal Curry Platter` 🍛\n\n"
-                    f"*A rich, steaming hot authentic curry cooked with secret traditional spices, fresh cream, and pure love.* 🔥🌶️\n\n"
-                    f"─── *Experience the true burst of flavors!* ───"
+            "title": "🍛 ROYAL INDIAN SPICE PLATTER",
+            "item_name": "Aromatic Royal Curry Platter",
+            "origin": "Imperial India 🇮🇳",
+            "line": "A rich, steaming hot authentic curry cooked with secret traditional spices, fresh cream, and pure love. 🔥🌶️"
         },
         "donuts": {
-            "title": "🍩 ─── GLAZED SWEET CONFECTION ─── 🍩",
-            "desc": f"**Premium Order Fulfilled!** ✨\n\n"
-                    f"**Customer:** {member.mention}\n"
-                    f"**Item Served:** `Premium Glazed Chocolate Donuts` 🍩\n\n"
-                    f"*A heavenly box of soft, airy donuts dipped in premium milk chocolate and topped with colorful pastel flakes.* 🌸\n\n"
-                    f"─── *Sweet treats for a wonderful soul!* ───"
+            "title": "🍩 GLAZED SWEET CONFECTION",
+            "item_name": "Premium Glazed Chocolate Donuts",
+            "origin": "Sweet Treats Corner 🌸",
+            "line": "A heavenly box of soft, airy donuts dipped in premium milk chocolate and topped with colorful pastel flakes."
+        },
+        "japan_sushi": {
+            "title": "🍣 JAPAN: MASTER SAKURA DELICACY",
+            "item_name": "Premium Sushi & Sashimi Platter",
+            "origin": "Tokyo, Japan 🇯🇵",
+            "line": "Handcrafted vinegared rice rolled with fresh premium seafood, served beautifully with authentic wasabi and pickled ginger! 🌸"
+        },
+        "mexico_tacos": {
+            "title": "🌮 MEXICO: SPICY STREET FEAST",
+            "item_name": "Crispy Loaded Tacos",
+            "origin": "Oaxaca, Mexico 🇲🇽",
+            "line": "Crunchy corn shells packed tightly with seasoned minced meat, zesty salsa fresco, rich guacamole, and sharp cheddar! 🔥"
+        },
+        "france_croissant": {
+            "title": "🥐 FRANCE: ROYAL PARISIAN BREAKFAST",
+            "item_name": "Golden Butter Croissant & Cafe",
+            "origin": "Paris, France 🇫🇷",
+            "line": "Flaky, multi-layered warm pastry baked with pure French butter, serving an elite melt-in-your-mouth luxury vibe! ✨"
+        },
+        "italy_pasta": {
+            "title": "🍝 ITALY: TUSCAN HARVEST",
+            "item_name": "Creamy Alfredo Fettuccine Pasta",
+            "origin": "Tuscany, Italy 🇮🇹",
+            "line": "Perfectly al dente pasta tossed gently in a rich, velvet sauce of aged parmesan, fresh garlic, and melted butter! 🧀"
+        },
+        "china_dimsum": {
+            "title": "🇨🇳 CHINA: IMPERIAL DIM SUM BOX",
+            "item_name": "Steamed Artisan Dim Sums",
+            "origin": "Guangzhou, China 🇨🇳",
+            "line": "A traditional steaming bamboo basket containing delicate, translucent crystal dumplings bursting with savory goodness! 🥢"
+        },
+        "turkey_kebab": {
+            "title": "🇹🇷 TURKEY: ANATOLIAN GRAND BAZAAR",
+            "item_name": "Authentic Doner Kebab Wrap",
+            "origin": "Istanbul, Turkey 🇹🇷",
+            "line": "Slow-roasted tender meat shaved finely, wrapped in warm lavash bread with crisp onions, herbs, and garlic yogurt sauce! 🌯"
+        },
+        "korea_tteokbokki": {
+            "title": "🇰🇷 SOUTH KOREA: SEOUL STREET KITCHEN",
+            "item_name": "Spicy Cheesy Tteokbokki",
+            "origin": "Seoul, South Korea 🇰🇷",
+            "line": "Chewy, cylindrical rice cakes simmered beautifully in a fiery, sweet gochujang chili sauce, topped with melted mozzarella! 🌶️"
+        },
+        "thailand_padthai": {
+            "title": "🇹🇭 THAILAND: BANGKOK NIGHT MARKET",
+            "item_name": "Tangy Stir-Fried Pad Thai",
+            "origin": "Bangkok, Thailand 🇹🇭",
+            "line": "Stir-fried rice noodles tossed with tofu, crushed peanuts, fresh bean sprouts, and a signature sweet-tangy tamarind glaze! 🍋"
+        },
+        "spain_paella": {
+            "title": "🇪🇸 SPAIN: MEDITERRANEAN TRADITION",
+            "item_name": "Saffron Seafood Paella",
+            "origin": "Valencia, Spain 🇪🇸",
+            "line": "A majestic pan of aromatic saffron rice slow-cooked with fresh prawns, mussels, and calamari, bursting with coastal flavors! ⚓"
+        },
+        "usa_bbq": {
+            "title": "🇺🇸 USA: TEXAS PITMASTER EXCLUSIVE",
+            "item_name": "Smoked Hickory BBQ Brisket",
+            "origin": "Texas, USA 🇺🇸",
+            "line": "Premium cut beef brisket smoked low and slow for 14 hours over hickory wood, coated in a thick, sweet and tangy BBQ glaze! 🪵"
         }
     }
 
     selected = menu_data.get(item)
     
-    # Elegant design without any attachment or url links
+    # Redesigned description layout to force Discord to make the member mention clickable and blue!
+    desc_template = (
+        f"**👑 International Order Fulfilled!**\n\n"
+        f"**🔹 Guest Served:** {member.mention}\n"
+        f"**🔹 Gourmet Item:** `{selected['item_name']}`\n"
+        f"**🔹 Culinary Origin:** *{selected['origin']}*\n\n"
+        f"ℹ️ *{selected['line']}*\n\n"
+        f"─── *Enjoy your elite dining experience!* ───"
+    )
+    
     embed = discord.Embed(
-        title=selected["title"],
-        description=selected["desc"],
-        color=discord.Color.from_rgb(245, 238, 227)  # Classic Warm Beige Aesthetic Color
+        title=f"👑 ─── {selected['title']} ─── 👑",
+        description=desc_template,
+        color=discord.Color.from_rgb(245, 238, 227)  # Aesthetic Warm Beige
     )
     embed.set_footer(text=f"✨ Stardust Butler System • Order requested by {interaction.user.name}")
     
