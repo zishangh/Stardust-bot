@@ -586,7 +586,8 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
     
     embed.set_footer(text=f"✨ Stardust Butler System • Order requested by {interaction.user.name}")
     
-    await interaction.followup.send(embed=embed)
+    content_text = f"🛎️ {member.mention}, you have been served a premium meal!"
+    await interaction.followup.send(content=content_text, embed=embed)
     
         
     
