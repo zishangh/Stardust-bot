@@ -566,7 +566,7 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
         }
   
         
-    @bot.tree.command(name="serve", description="🛎️ Serve a premium global meal to a highly distinguished member")
+@bot.tree.command(name="serve", description="🛎️ Serve a premium global meal to a highly distinguished member")
 async def serve(interaction: discord.Interaction, item: str, member: discord.Member):
     await interaction.response.defer()
     
@@ -642,6 +642,7 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
     
     content_text = f"🛎️ {member.mention}, you have been served a premium meal!"
     await interaction.followup.send(content=content_text, embed=embed)
+
     
 # =========================================================
 # 🛡️ MODULE 3: MODERATION SUITE (FIXED BAN TYPO)
