@@ -464,7 +464,6 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
         "donuts": "https://media.tenor.com/p1_wLgS-M34AAAAC/anime-donut.gif"
     }
 
-    selected_gif = menu_gifs.get(item)
     item_names = {
         "coffee": "☕ hot premium coffee",
         "pizza": "🍕 woodfired cheesy pizza",
@@ -474,9 +473,14 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
         "donuts": "🍩 glazed sweet donut"
     }
     
-    # Bina embed ke direct clean path—Discord automatic text link ko ek premium badi GIF mein convert kar dega!
-    content_text = f"🍽️ {interaction.user.mention} serves a delicious **{item_names[item]}** to {member.mention}!\n{selected_gif}"
-    await interaction.followup.send(content=content_text)
+    # Clean Text Message Format
+    content_text = f"🍽️ {interaction.user.mention} serves a delicious **{item_names[item]}** to {member.mention}!"
+    
+    # DISCORD DIRECT ATTACHMENT METHOD: Forcefully injects the image into chat canvas
+    embed = discord.Embed(color=discord.Color.from_rgb(245, 238, 227))
+    embed.set_image(url=menu_gifs[item])
+    
+    await interaction.followup.send(content=content_text, embed=embed)
     
 # =========================================================
 # 🛡️ MODULE 3: MODERATION SUITE (FIXED BAN TYPO)
