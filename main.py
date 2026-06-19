@@ -2049,7 +2049,62 @@ class EmbedBuilderModal(discord.ui.Modal, title="🎨 Custom Embed Designer Pane
 async def embed_builder(interaction: discord.Interaction, channel: discord.TextChannel):
     # Admin ke liye modal open karega
     await interaction.response.send_modal(EmbedBuilderModal(target_channel=channel))
-    
+# ==============================================================================
+# 🛡️ GLOBAL APPLICATION ERROR HANDLING & PERMISSION MANAGEMENT PROTECTION
+# ==============================================================================
+
+@bot.tree.error
+async def on_app_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
+    """
+    Global app command listener to handle missing permissions, rate limits, 
+    and unexpected backend simulation drops seamlessly without hanging.
+    """
+    # 1. Catching Missing Permissions (User doesn't have the role/admin)
+    if isinstance(error, discord.app_commands.errors.MissingPermissions):
+        missing_perms = ", ".join(error.missing_permissions)
+        embed = discord.Embed(
+            title="🚫 Access Denied",
+            description=f"You do not possess the required structural authority to trigger this runtime command.\n\n🛡️ **Required Privilege:** `{missing_perms}`",
+            color=discord.Color.from_rgb(239, 83, 80)
+        )
+        if not interaction.response.is_done():
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        else:
+            await interaction.edit_original_response(content=None, embed=embed)
+        return
+
+    # 2. Catching Bot Missing Permissions (Bot itself lacks access to read/write/embed)
+    elif isinstance(error, discord.app_commands.errors.BotMissingPermissions):
+        missing_perms = ", ".join(error.missing_permissions)
+        embed = discord.Embed(
+            title="⚠️ System Operation Fault",
+            description=f"The application core requires higher server permissions to complete execution integration configuration.\n\n🔧 **Missing Bot Nodes:** `{missing_perms}`",
+            color=discord.Color.orange()
+        )
+        if not interaction.response.is_done():
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        else:
+            await interaction.edit_original_response(content=None, embed=embed)
+        return
+
+    # 3. Catching All Unexpected Exceptions Globally (No exception pass bug)
+    else:
+        print(f"[CRITICAL APP INTERACTION FAULT]: {error}")
+        embed = discord.Embed(
+            title="💥 Exceptional Runtime Drop",
+            description="An unhandled continuous state parameter mutation occurred during the background parsing cycle.",
+            color=discord.Color.dark_gray()
+        )
+        embed.add_field(name="Diagnostic Context Tracking:", value=f"`{str(error)[:100]}`", inline=False)
+        
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            else:
+                await interaction.edit_original_response(content=None, embed=embed)
+        except Exception:
+            pass  # Fail-safe suppression matrix to protect execution stability
+
 # Deploy System Launch Configuration
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
