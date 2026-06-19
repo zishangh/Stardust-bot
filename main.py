@@ -439,36 +439,35 @@ async def on_message(message: discord.Message):
 # ☕ MODULE 2: FUN INTERACTIONS (PREMIUM GIF SERVING ENGINE)
 # ====================================================================
 
-@bot.tree.command(name="serve", description="🍽️ Serve a 100% pure premium global aesthetic food item from the Stardust Cafe")
+@bot.tree.command(name="serve", description="🛎️ Serve a premium global meal to a highly distinguished member")
 @discord.app_commands.describe(
     item="Choose the premium safe item to serve",
     member="The customer who will receive this delicious treat"
 )
 @discord.app_commands.choices(item=[
-    # Original Base Menu (Pure Veg / Soft Drinks)
+    # Original Base Menu
     discord.app_commands.Choice(name="☕ Barista Coffee", value="coffee"),
     discord.app_commands.Choice(name="🍕 Woodfired Pizza", value="pizza"),
     discord.app_commands.Choice(name="🍔 Gourmet Burger", value="burger"),
     discord.app_commands.Choice(name="🥤 Chilled Drink", value="cold_drink"),
     discord.app_commands.Choice(name="🍛 Royal Indian Curry", value="indian_spicy"),
     discord.app_commands.Choice(name="🍩 Glazed Donuts", value="donuts"),
-    # New 10 100% Pure & Safe International Choices
-    discord.app_commands.Choice(name="🇯🇵 Japan: Sweet Matcha Mochi", value="japan_mochi"),
+    # International Choices
+    discord.app_commands.Choice(name="🍡 Japan: Sweet Matcha Mochi", value="japan_mochi"),
     discord.app_commands.Choice(name="🌮 Mexico: Cheesy Veg Quesadilla", value="mexico_quesadilla"),
     discord.app_commands.Choice(name="🥐 France: Butter Croissant & Cafe", value="france_croissant"),
     discord.app_commands.Choice(name="🍝 Italy: Creamy Alfredo Pasta", value="italy_pasta"),
-    discord.app_commands.Choice(name="🇨🇳 China: Steamed Veg Dim Sum Box", value="china_dimsum"),
-    discord.app_commands.Choice(name="🇹🇷 Turkey: Royal Pistachio Baklava", value="turkey_baklava"),
-    discord.app_commands.Choice(name="🇰🇷 South Korea: Cheesy Rice Cakes (Tteokbokki)", value="korea_tteokbokki"),
-    discord.app_commands.Choice(name="🇹🇭 Thailand: Mango Sticky Rice Dessert", value="thailand_mangorice"),
-    discord.app_commands.Choice(name="🇪🇸 Spain: Crispy Sweet Churros Box", value="spain_churros"),
-    discord.app_commands.Choice(name="🇺🇸 USA: Loaded Premium Waffles", value="usa_waffles")
+    discord.app_commands.Choice(name="🥟 China: Steamed Veg Dim Sum Box", value="china_dimsum"),
+    discord.app_commands.Choice(name="🥮 Turkey: Royal Pistachio Baklava", value="turkey_baklava"),
+    discord.app_commands.Choice(name="🍢 South Korea: Cheesy Rice Cakes (Tteokbokki)", value="korea_tteokbokki"),
+    discord.app_commands.Choice(name="🥭 Thailand: Mango Sticky Rice Dessert", value="thailand_mangorice"),
+    discord.app_commands.Choice(name="🥖 Spain: Crispy Sweet Churros Box", value="spain_churros"),
+    discord.app_commands.Choice(name="🧇 USA: Loaded Premium Waffles", value="usa_waffles")
 ])
-@bot.tree.command(name="serve", description="🛎️ Serve a premium global meal to a highly distinguished member")
 async def serve(interaction: discord.Interaction, item: str, member: discord.Member):
     await interaction.response.defer()
     
-    
+    menu_data = {
         "coffee": {"title": "BARISTA ESPRESSO", "item_name": "Premium Barista Coffee", "origin": "Milan, Italy 🇮🇹", "line": "A rich, dark aromatic espresso topped with perfect velvety crema."},
         "donuts": {"title": "GLAZED LUXURY", "item_name": "Gourmet Glazed Donuts", "origin": "Belgium 🇧🇪", "line": "Fluffy, artisanal dough glazed with premium melted white chocolate."},
         "cold_drink": {"title": "CRYSTAL ICY COLD", "item_name": "Chilled Icy Soda Pop", "origin": "Atlanta, USA 🇺🇸", "line": "An ice-cold sparkling beverage served with fresh mint leaves."},
@@ -538,55 +537,6 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
     content_text = f"🛎️ {member.mention}, you have been served a premium meal!"
     await interaction.followup.send(content=content_text, embed=embed)
 
-
-    
-    # 💰 ============ ECONOMY LINKING SYSTEM ============
-    prices = {
-        "coffee": 50, "donuts": 60, "cold_drink": 70, "burger": 100, "pizza": 120, "indian_spicy": 150,
-        "japan_mochi": 180, "mexico_quesadilla": 200, "france_croissant": 220, "italy_pasta": 250,
-        "china_dimsum": 260, "turkey_baklava": 280, "korea_tteokbokki": 300, "thailand_mangorice": 320,
-        "spain_churros": 340, "usa_waffles": 350
-    }
-    
-    item_cost = prices.get(item, 0)
-    user_id = str(interaction.user.id)
-    eco_data = load_economy()
-    eco_data = check_account(user_id, eco_data)
-    
-    # ❌ Checking if the user has enough coins
-    if eco_data[user_id]["balance"] < item_cost:
-        embed_fail = discord.Embed(
-            title="💸 INSUFFICIENT FUNDS",
-            description=f"❌ {interaction.user.mention}, aapke paas `{selected['item_name']}` serve karne ke liye paryapt coins nahi hain!\n\n💰 **Required:** `{item_cost} Coins` | 💳 **Your Balance:** `{eco_data[user_id]['balance']} Coins`\n\n💡 *Coins kamane ke liye `/daily` command use karein!*",
-            color=discord.Color.red()
-        )
-        await interaction.followup.send(embed=embed_fail)
-        return
-        
-    # ✅ Account se coins deduct karein agar balance kaafi hai
-    eco_data[user_id]["balance"] -= item_cost
-    save_economy(eco_data)
-    # ===================================================
-
-    # Clean and luxurious embed poster design
-    desc_template = (
-        f"**👑 International Order Fulfilled!**\n\n"
-        f"**🔹 Gourmet Item:** `{selected['item_name']}`\n"
-        f"**🔹 Culinary Origin:** *{selected['origin']}*\n"
-        f"💸 **Cost Deducted:** `{item_cost} Stardust Coins`\n\n"
-        f"ℹ️ *{selected['line']}*\n\n"
-        f"─── *Enjoy your elite dining experience!* ───"
-    )
-    
-    embed = discord.Embed(
-        title=f"👑 ─── {selected['title']} ─── 👑",
-        description=desc_template,
-        color=discord.Color.from_rgb(245, 238, 227)
-    )
-    embed.set_footer(text=f"✨ Stardust Butler System • Balance Left: {eco_data[user_id]['balance']} Coins")
-    
-    content_text = f"🛎️ {member.mention}, you have been served a premium meal!"
-    await interaction.followup.send(content=content_text, embed=embed)
 
     
 # =========================================================
