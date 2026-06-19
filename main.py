@@ -743,7 +743,9 @@ def save_economy(data):
 
 def check_account(user_id: str, data):
     if user_id not in data:
-        data[user_id] = {"balance": 0, "last_daily": 0}
+        data[user_id] = {"balance": 0, "last_daily": 0, "inventory": []}
+    elif "inventory" not in data[user_id]:
+        data[user_id]["inventory"] = []  # Purane registered users ke profile me inventory automatically add ho jayegi
     return data
 
 @bot.tree.command(name="daily", description="🎁 Claim your daily premium Stardust Rewards!")
@@ -846,7 +848,120 @@ async def menu(interaction: discord.Interaction):
     )
     embed.set_footer(text="✨ Stardust Cafe Premium Management")
     await interaction.followup.send(embed=embed)
+# ==============================================================================
+# 🛒 MODULE 5.5: STARDUST COSMIC SHOP & INVENTORY
+# ==============================================================================
+
+SHOP_ITEMS = {
+    # 🐾 COSMIC PETS CATEGORY
+    "nebula_kitten": {"price": 1200, "type": "Pet", "display": "🐱 Nebula Kitten", "desc": "A cute space kitty that floats around your profile."},
+    "stardust_dragon": {"price": 5000, "type": "Pet", "display": "🐲 Stardust Dragon", "desc": "A legendary cosmic dragon protecting your wallet."},
+    "cyber_puppy": {"price": 2500, "type": "Pet", "display": "🐶 Cyber Puppy", "desc": "A futuristic neon puppy with glowing eyes."},
     
+    # 🏅 PREMIUM BADGES CATEGORY
+    "rich_vibes": {"price": 3000, "type": "Badge", "display": "💰 Richie Rich", "desc": "Show everyone that you are drowning in Stardust Coins!"},
+    "elite_gamer": {"price": 1500, "type": "Badge", "display": "🎮 Elite Gamer", "desc": "A custom badge for the true grinders of the server."},
+    "stardust_legend": {"price": 8000, "type": "Badge", "display": "✨ Cosmic Legend", "desc": "The ultimate status symbol on the server."}
+}
+
+@bot.tree.command(name="shop", description="🛒 Browse the premium Stardust Cosmic Shop!")
+async def shop(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="🌟 STARDUST COSMIC SHOP 🌟",
+        description="Welcome to the elite market! Use `/buy <item_name>` to unlock these premium collectibles.\n\n"
+                    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        color=discord.Color.from_rgb(147, 112, 219)
+    )
+    
+    pets_text = ""
+    for item_id, info in SHOP_ITEMS.items():
+        if info["type"] == "Pet":
+            pets_text += f"**{info['display']}** (`{item_id}`)\n🪙 Price: **{info['price']} Coins**\n✨ *{info['desc']}*\n\n"
+    embed.add_field(name="🐾 Cosmic Pets", value=pets_text or "No pets available.", inline=False)
+    
+    badges_text = ""
+    for item_id, info in SHOP_ITEMS.items():
+        if info["type"] == "Badge":
+            badges_text += f"**{info['display']}** (`{item_id}`)\n🪙 Price: **{info['price']} Coins**\n✨ *{info['desc']}*\n\n"
+    embed.add_field(name="🏅 Premium Badges", value=badges_text or "No badges available.", inline=False)
+    
+    embed.set_footer(text="✨ Stardust Economy System • Shop Luxury Items")
+    await interaction.response.send_message(embed=embed)
+
+
+@bot.tree.command(name="buy", description="🛍️ Purchase an item or adopt a pet from the shop!")
+@discord.app_commands.describe(item_id="The short ID of the item (e.g., nebula_kitten, rich_vibes)")
+async def buy(interaction: discord.Interaction, item_id: str):
+    await interaction.response.defer()
+    
+    user_id = str(interaction.user.id)
+    item_id = item_id.lower().strip()
+    
+    if item_id not in SHOP_ITEMS:
+        return await interaction.followup.send("❌ **Invalid Item ID!** Please check `/shop` for the correct item keywords.", ephemeral=True)
+    
+    item = SHOP_ITEMS[item_id]
+    
+    data = load_economy()
+    data = check_account(user_id, data)
+    
+    if item_id in data[user_id]["inventory"]:
+        return await interaction.followup.send(f"❌ **You already own {item['display']}!** You cannot buy duplicates of this item.", ephemeral=True)
+    
+    if data[user_id]["balance"] < item["price"]:
+        shortage = item["price"] - data[user_id]["balance"]
+        return await interaction.followup.send(f"❌ **Insufficient Funds!** You need **{shortage} more Stardust Coins** to purchase {item['display']}.", ephemeral=True)
+    
+    data[user_id]["balance"] -= item["price"]
+    data[user_id]["inventory"].append(item_id)
+    save_economy(data)
+    
+    embed = discord.Embed(
+        title="🎉 Purchase Successful! 🎉",
+        description=f"Congratulations **{interaction.user.display_name}**!\n\n"
+                    f"You have successfully acquired/adopted **{item['display']}**!\n"
+                    f"🪙 **{item['price']} Stardust Coins** have been deducted from your wallet.",
+        color=discord.Color.from_rgb(50, 205, 50)
+    )
+    embed.set_footer(text=f"New Wallet Balance: {data[user_id]['balance']} Coins")
+    await interaction.followup.send(embed=embed)
+
+
+@bot.tree.command(name="inventory", description="🎒 View all your adopted cosmic pets and premium badges!")
+async def inventory(interaction: discord.Interaction):
+    user_id = str(interaction.user.id)
+    data = load_economy()
+    data = check_account(user_id, data)
+    
+    user_inventory = data[user_id].get("inventory", [])
+    
+    embed = discord.Embed(
+        title=f"🎒 {interaction.user.display_name}'s Cosmic Vault",
+        description="Here is everything you have collected from the Stardust Shop!\n\n"
+                    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        color=discord.Color.from_rgb(30, 144, 255)
+    )
+    
+    if not user_inventory:
+        embed.description += "\n*Your vault is completely empty! Collect some coins and visit `/shop` to buy cute things!*"
+    else:
+        pets_list = []
+        badges_list = []
+        
+        for item_id in user_inventory:
+            if item_id in SHOP_ITEMS:
+                item = SHOP_ITEMS[item_id]
+                if item["type"] == "Pet":
+                    pets_list.append(item["display"])
+                elif item["type"] == "Badge":
+                    badges_list.append(item["display"])
+                    
+        embed.add_field(name="🐾 Adopted Pets", value="\n".join(pets_list) if pets_list else "*No pets adopted yet.*", inline=True)
+        embed.add_field(name="🏅 Unlocked Badges", value="\n".join(badges_list) if badges_list else "*No badges unlocked yet.*", inline=True)
+        
+    embed.set_footer(text="✨ Showcase your inventory to your friends!")
+    await interaction.response.send_message(embed=embed)
+
 # Deploy System Launch Configuration
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
