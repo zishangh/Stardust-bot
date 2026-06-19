@@ -644,6 +644,113 @@ async def help_command(interaction: discord.Interaction):
 async def ping(interaction: discord.Interaction):
     await interaction.response.send_message(f"🏓 Pong! Speed: `{round(bot.latency * 1000)}ms` (⁠◠⁠‿⁠◕⁠)")
 
+# =====================================================================
+# 💰 MODULE 5: STARDUST CAFE LUXURY ECONOMY & GLOBAL SHOP
+# =====================================================================
+
+ECONOMY_FILE = "economy.json"
+
+def load_economy():
+    if os.path.exists(ECONOMY_FILE):
+        try:
+            with open(ECONOMY_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_economy(data):
+    with open(ECONOMY_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+def check_account(user_id: str, data):
+    if user_id not in data:
+        data[user_id] = {"balance": 500}  # ✨ Welcome Bonus!
+    return data
+
+
+@bot.tree.command(name="daily", description="🎁 Claim your daily premium Stardust Rewards!")
+async def daily(interaction: discord.Interaction):
+    await interaction.response.defer()
+    user_id = str(interaction.user.id)
+    data = load_economy()
+    data = check_account(user_id, data)
+    
+    reward = 200
+    data[user_id]["balance"] += reward
+    save_economy(data)
+    
+    embed = discord.Embed(
+        title="🌟 ─── STARDUST DAILY BONUS ─── 🌟",
+        description=(
+            f"**Good Morning, Chef!** ✨\n\n"
+            f"🎁 You have claimed your daily **{reward} Stardust Coins**!\n"
+            f"💳 **New Wallet Balance:** `{data[user_id]['balance']} Coins`\n\n"
+            f"─── *Come back tomorrow for more rewards!* ───"
+        ),
+        color=discord.Color.from_rgb(245, 238, 227)
+    )
+    embed.set_footer(text="✨ Powered by Stardust Luxury Butler")
+    await interaction.followup.send(embed=embed)
+
+@bot.tree.command(name="wallet", description="💳 View your personal Stardust Cafe balance sheet")
+async def wallet(interaction: discord.Interaction):
+    await interaction.response.defer()
+    user_id = str(interaction.user.id)
+    data = load_economy()
+    data = check_account(user_id, data)
+    
+    balance = data[user_id]["balance"]
+    
+    embed = discord.Embed(
+        title="💳 ─── STARDUST VAULT BALANCE ─── 💳",
+        description=(
+            f"👤 **Account Holder:** {interaction.user.mention}\n"
+            f"🏛️ **Bank Status:** `Verified Pro Developer ✅`\n\n"
+            f"🪙 **Available Balance:** `{balance} Stardust Coins`\n\n"
+            f"💸 *Use `/menu` to check what luxurious food you can buy!*"
+        ),
+        color=discord.Color.from_rgb(245, 238, 227)
+    )
+    embed.set_footer(text="✨ Stardust Butler System")
+    await interaction.followup.send(embed=embed)
+
+@bot.tree.command(name="menu", description="📜 Open the ultimate global menu card of Stardust Cafe")
+async def menu(interaction: discord.Interaction):
+    await interaction.response.defer()
+    
+    shop_content = (
+        "👑 **─── 🌟 STARDUST LUXURY CAFÉ MENU 🌟 ───** 👑\n"
+        "*Every dish is 100% pure, premium, and globally certified.*\n\n"
+        "**☕ HOUSE SPECIALS**\n"
+        "• `coffee` ── ☕ Barista Coffee ── **50 Coins**\n"
+        "• `donuts` ── 🍩 Glazed Donuts ── **60 Coins**\n"
+        "• `cold_drink` ── 🥤 Chilled Icy Drink ── **70 Coins**\n"
+        "• `burger` ── 🍔 Gourmet Stack Burger ── **100 Coins**\n"
+        "• `pizza` ── 🍕 Woodfired Italian Pizza ── **120 Coins**\n"
+        "• `indian_spicy` ── 🍛 Royal Indian Curry ── **150 Coins**\n\n"
+        "**✈️ PRESTIGE GLOBAL CONFECTIONS**\n"
+        "• `japan_mochi` ── 🇯🇵 Sweet Matcha Mochi ── **180 Coins**\n"
+        "• `mexico_quesadilla` ── 🌮 Cheesy Veg Quesadilla ── **200 Coins**\n"
+        "• `france_croissant` ── 🥐 Butter Croissant & Cafe ── **220 Coins**\n"
+        "• `italy_pasta` ── 🍝 Creamy Alfredo Pasta ── **250 Coins**\n"
+        "• `china_dimsum` ── 🇨🇳 Steamed Veg Dim Sum Box ── **260 Coins**\n"
+        "• `turkey_baklava` ── 🇹🇷 Royal Pistachio Baklava ── **280 Coins**\n"
+        "• `korea_tteokbokki` ── 🇰🇷 Cheesy Rice Cakes ── **300 Coins**\n"
+        "• `thailand_mangorice` ── 🇹🇭 Mango Sticky Rice ── **320 Coins**\n"
+        "• `spain_churros` ── 🇪🇸 Crispy Sweet Churros ── **340 Coins**\n"
+        "• `usa_waffles` ── 🇺🇸 Loaded Premium Waffles ── **350 Coins**\n\n"
+        "─── *To serve an item, you must have enough coins!* ───"
+    )
+    
+    embed = discord.Embed(
+        title="📜 ─── EST. 2026 GLOBAL MENU CARD ─── 📜",
+        description=shop_content,
+        color=discord.Color.from_rgb(245, 238, 227)
+    )
+    embed.set_footer(text="✨ Stardust Cafe Premium Management")
+    await interaction.followup.send(embed=embed)
+    
 # Deploy System Launch Configuration
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
