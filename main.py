@@ -566,29 +566,55 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
         }
     }
 
-    selected = menu_data.get(item)
+  selected = menu_data.get(item)
     
-    # Elegant embed using native Discord structures to ensure mentions parse into live links
-    embed = discord.Embed(
-        title=f"👑 ─── {selected['title']} ─── 👑",
-        color=discord.Color.from_rgb(245, 238, 227)
-    )
+    # 💰 ============ ECONOMY LINKING SYSTEM ============
+    prices = {
+        "coffee": 50, "donuts": 60, "cold_drink": 70, "burger": 100, "pizza": 120, "indian_spicy": 150,
+        "japan_mochi": 180, "mexico_quesadilla": 200, "france_croissant": 220, "italy_pasta": 250,
+        "china_dimsum": 260, "turkey_baklava": 280, "korea_tteokbokki": 300, "thailand_mangorice": 320,
+        "spain_churros": 340, "usa_waffles": 350
+    }
     
-    # Plain text assignment blocks that natively parse into blue mentions inside Discord clients
-    embed.description = (
+    item_cost = prices.get(item, 0)
+    user_id = str(interaction.user.id)
+    eco_data = load_economy()
+    eco_data = check_account(user_id, eco_data)
+    
+    # ❌ Checking if the user has enough coins
+    if eco_data[user_id]["balance"] < item_cost:
+        embed_fail = discord.Embed(
+            title="💸 INSUFFICIENT FUNDS",
+            description=f"❌ {interaction.user.mention}, aapke paas `{selected['item_name']}` serve karne ke liye paryapt coins nahi hain!\n\n💰 **Required:** `{item_cost} Coins` | 💳 **Your Balance:** `{eco_data[user_id]['balance']} Coins`\n\n💡 *Coins kamane ke liye `/daily` command use karein!*",
+            color=discord.Color.red()
+        )
+        await interaction.followup.send(embed=embed_fail)
+        return
+        
+    # ✅ Account se coins deduct karein agar balance kaafi hai
+    eco_data[user_id]["balance"] -= item_cost
+    save_economy(eco_data)
+    # ===================================================
+
+    # Clean and luxurious embed poster design
+    desc_template = (
         f"**👑 International Order Fulfilled!**\n\n"
-        f"**🔹 Guest Served:** {member.mention}\n"
         f"**🔹 Gourmet Item:** `{selected['item_name']}`\n"
-        f"**🔹 Culinary Origin:** *{selected['origin']}*\n\n"
+        f"**🔹 Culinary Origin:** *{selected['origin']}*\n"
+        f"💸 **Cost Deducted:** `{item_cost} Stardust Coins`\n\n"
         f"ℹ️ *{selected['line']}*\n\n"
         f"─── *Enjoy your elite dining experience!* ───"
     )
     
-    embed.set_footer(text=f"✨ Stardust Butler System • Order requested by {interaction.user.name}")
+    embed = discord.Embed(
+        title=f"👑 ─── {selected['title']} ─── 👑",
+        description=desc_template,
+        color=discord.Color.from_rgb(245, 238, 227)
+    )
+    embed.set_footer(text=f"✨ Stardust Butler System • Balance Left: {eco_data[user_id]['balance']} Coins")
     
     content_text = f"🛎️ {member.mention}, you have been served a premium meal!"
-    await interaction.followup.send(content=content_text, embed=embed)
-    
+    await interaction.followup.send(content=content_text, embed=embed)  
         
     
 # =========================================================
@@ -664,10 +690,6 @@ def save_economy(data):
         json.dump(data, f, indent=4)
 
 def check_account(user_id: str, data):
-    if user_id not in data:
-        data[user_id] = {"balance": 500}  # ✨ Welcome Bonus!
-    return data
-
 
 @bot.tree.command(name="daily", description="🎁 Claim your daily premium Stardust Rewards!")
 async def daily(interaction: discord.Interaction):
@@ -676,8 +698,27 @@ async def daily(interaction: discord.Interaction):
     data = load_economy()
     data = check_account(user_id, data)
     
+    import time
+    current_time = int(time.time())
+    last_claim = data[user_id].get("last_daily", 0)
+    cooldown = 86400  # 24 Hours in seconds
+    
+    if current_time - last_claim < cooldown:
+        remaining_time = cooldown - (current_time - last_claim)
+        hours = remaining_time // 3600
+        minutes = (remaining_time % 3600) // 60
+        
+        embed = discord.Embed(
+            title="⏳ COOLDOWN ACTIVE",
+            description=f"❌ {interaction.user.mention}, aap pehle hi aaj ka reward le chuke hain!\n\n⏳ **Agle reward ke liye intezar karein:** `{hours}h {minutes}m`",
+            color=discord.Color.from_rgb(245, 238, 227)
+        )
+        await interaction.followup.send(embed=embed)
+        return
+
     reward = 200
     data[user_id]["balance"] += reward
+    data[user_id]["last_daily"] = current_time
     save_economy(data)
     
     embed = discord.Embed(
