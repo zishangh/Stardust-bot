@@ -53,6 +53,10 @@ intents.guilds = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# ==============================================================================
+# 🤖 MAIN BOT EVENTS CONFIGURATION (ON_READY & ON_MESSAGE UNIFIED)
+# ==============================================================================
+
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name}')
@@ -61,8 +65,52 @@ async def on_ready():
         print(f"Synced {len(synced)} commands.")
     except Exception as e:
         print(f"Sync Error: {e}")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.competing, name="Stardust Global Network 🌐"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="your commands"))
+    
+    # ⏰ Reminder background loop ko start karne ki line
+    bot.loop.create_task(reminder_checker_loop())
 
+
+@bot.event
+async def on_message(message: discord.Message):
+    # Bot ke apne messages aur DMs ko ignore karne ke liye
+    if message.author.bot or not message.guild:
+        return
+
+    g_id = str(message.guild.id)
+
+    # 1. 💬 DYNAMIC AUTO-RESPONDER ENGINE (Pehle custom words check karega)
+    if g_id in AUTO_RESPONSES:
+        clean_msg = message.content.lower().strip()
+        if clean_msg in AUTO_RESPONSES[g_id]:
+            await message.channel.send(AUTO_RESPONSES[g_id][clean_msg])
+            return  # Trigger milte hi process stop taaki baaki filters faltu me na chalein
+
+    # 2. 🛡️ AUTOMOD SECURITY ENGINE (Triggers ke baad badwords scan karega)
+    is_automod_on = SERVER_CONFIGS.get(g_id, {}).get("automod_enabled", True)
+
+    if is_automod_on:
+        clean_content = message.content.lower().strip()
+        for toxic_word in BLOCK_LIST:
+            if toxic_word in clean_content:
+                try:
+                    await message.delete()
+                    alert = discord.Embed(
+                        title="🛡️ System Shield Intervention",
+                        description=f"⚠️ {message.author.mention}, your text pattern triggered the premium word block filter list. Clean chat environment rules apply.",
+                        color=discord.Color.from_rgb(255, 99, 71)
+                    )
+                    warn_msg = await message.channel.send(embed=alert)
+                    await asyncio.sleep(4)
+                    await warn_msg.delete()
+                    return  # Message delete hone ke baad process stop
+                except discord.Forbidden:
+                    pass
+                except Exception as e:
+                    print(f"Filter Exception: {e}")
+
+    # 🔌 Yeh line sabhi normal slash commands aur message triggers ko zinda rakhegi
+    await bot.process_commands(message)
 # =========================================================
 # 🛠️ SYSTEM 1: DYNO-STYLE CLEAN WELCOME SYSTEM
 # =========================================================
@@ -1423,15 +1471,23 @@ async def automod_setup(interaction: discord.Interaction, status: bool):
     await interaction.response.send_message(embed=embed)
 
 
-# EVENT LISTENER: BACKEND INTERCEPT CHAT SECURITY MONITORING
+# EVENT LISTENER: BACKEND INTERCEPT CHAT SECURITY & AUTO-RESPONDER
 @bot.event
 async def on_message(message: discord.Message):
     if message.author.bot or not message.guild:
         return
 
     g_id = str(message.guild.id)
-    # Check config map to see if security engine state is enabled
-    is_automod_on = SERVER_CONFIGS.get(g_id, {}).get("automod_enabled", True) # Defaults to true if setup command hasn't been run yet
+
+    # 1. 💬 DYNAMIC AUTO-RESPONDER ENGINE (Pehle trigger check karega)
+    if g_id in AUTO_RESPONSES:
+        clean_msg = message.content.lower().strip()
+        if clean_msg in AUTO_RESPONSES[g_id]:
+            await message.channel.send(AUTO_RESPONSES[g_id][clean_msg])
+            return  # Trigger milte hi yahin ruk jayega taaki baaki filters chalne ki jarurat na pade
+
+    # 2. 🛡️ AUTOMOD SECURITY ENGINE (Agar trigger nahi mila, toh badwords check karega)
+    is_automod_on = SERVER_CONFIGS.get(g_id, {}).get("automod_enabled", True)
 
     if is_automod_on:
         clean_content = message.content.lower().strip()
@@ -1447,14 +1503,14 @@ async def on_message(message: discord.Message):
                     warn_msg = await message.channel.send(embed=alert)
                     await asyncio.sleep(4)
                     await warn_msg.delete()
-                    return # Stop verification immediately since the threat object is scrubbed
+                    return  # Badword delete hone ke baad process stop ho jayega
                 except discord.Forbidden:
-                    pass # Log silently if missing role privileges over that individual admin object
+                    pass
                 except Exception as e:
                     print(f"Filter Exception: {e}")
 
+    # Yeh line sabhi normal slash commands aur triggers ko chalu rakhegi
     await bot.process_commands(message)
-
 # PERMISSION ERROR HANDLERS
 @setleaderboard.error
 @removeleaderboard.error
@@ -1607,6 +1663,195 @@ async def perkshop(interaction: discord.Interaction):
         
     embed.set_footer(text="✨ Luxury Server Customization Panel")
     await interaction.response.send_message(embed=embed)
+# ==============================================================================
+# ⏰ MODULE 10.0: AUTO-RESPONDER & ADVANCED SCHEDULING REMINDERS
+# ==============================================================================
+
+import re
+import asyncio
+from datetime import datetime, timedelta
+
+# Global data containers
+AUTO_RESPONSES = {}  # Format: {"guild_id": {"trigger": "response_text"}}
+REMINDERS = []       # Format: [{"user_id": 123, "channel_id": 456, "time": datetime, "text": "..."}]
+AUTO_REMINDERS = {}  # Format: {"guild_id": {"interval_hours": 2, "channel_id": 123, "text": "...", "task": TaskObject}}
+
+# ------------------------------------------------------------------------------
+# 💬 SECTION A: DYNAMIC AUTO-RESPONDER SYSTEM
+# ------------------------------------------------------------------------------
+
+@bot.tree.command(name="add_responder", description="⚙️ Admin Only: Add a custom trigger word and automated message response.")
+@discord.app_commands.describe(trigger="The keyword that triggers the bot", response="The text bot sends when keyword is typed")
+@discord.app_commands.checks.has_permissions(manage_guild=True)
+async def add_responder(interaction: discord.Interaction, trigger: str, response: str):
+    g_id = str(interaction.guild_id)
+    trigger_clean = trigger.lower().strip()
+    
+    if g_id not in AUTO_RESPONSES:
+        AUTO_RESPONSES[g_id] = {}
+        
+    AUTO_RESPONSES[g_id][trigger_clean] = response
+    
+    embed = discord.Embed(
+        title="💬 Auto-Responder Added",
+        description=f"✅ Successfully registered new custom response!\n\n"
+                    f"✨ **Trigger Keyword:** `{trigger_clean}`\n"
+                    f"📝 **Bot Response:** {response}",
+        color=discord.Color.from_rgb(147, 112, 219)
+    )
+    await interaction.response.send_message(embed=embed)
+
+
+@bot.tree.command(name="remove_responder", description="⚙️ Admin Only: Remove a custom auto-responder trigger.")
+@discord.app_commands.describe(trigger="The keyword you want to delete")
+@discord.app_commands.checks.has_permissions(manage_guild=True)
+async def remove_responder(interaction: discord.Interaction, trigger: str):
+    g_id = str(interaction.guild_id)
+    trigger_clean = trigger.lower().strip()
+    
+    if g_id in AUTO_RESPONSES and trigger_clean in AUTO_RESPONSES[g_id]:
+        del AUTO_RESPONSES[g_id][trigger_clean]
+        await interaction.response.send_message(f"🗑️ Successfully removed auto-responder for keyword: `{trigger_clean}`")
+    else:
+        await interaction.response.send_message("❌ **Error:** No active auto-responder found for that trigger keyword.", ephemeral=True)
+
+
+# ------------------------------------------------------------------------------
+# ⏰ SECTION B: ONE-TIME REMINDER SYSTEM
+# ------------------------------------------------------------------------------
+
+def parse_reminder_time(duration_str: str) -> int:
+    """Helper to convert 10m, 2h, 1d into total minutes"""
+    match = re.match(r"(\d+)([mhd])", duration_str.lower().strip())
+    if not match: return 0
+    amount, unit = match.groups()
+    amount = int(amount)
+    if unit == 'm': return amount
+    if unit == 'h': return amount * 60
+    if unit == 'd': return amount * 1440
+    return 0
+
+# One-time background checking loop for single reminders
+async def reminder_checker_loop():
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        now = datetime.utcnow()
+        for r in REMINDERS[:]:
+            if now >= r["time"]:
+                channel = bot.get_channel(r["channel_id"])
+                if channel:
+                    try:
+                        user = await bot.fetch_user(r["user_id"])
+                        embed = discord.Embed(
+                            title="⏰ ALARM / REMINDER ⏰",
+                            description=f"🔔 {user.mention}, here is your scheduled reminder!\n\n📝 **Note:** {r['text']}",
+                            color=discord.Color.from_rgb(30, 144, 255)
+                        )
+                        await channel.send(content=user.mention, embed=embed)
+                    except Exception as e:
+                        print(f"Error firing reminder: {e}")
+                REMINDERS.remove(r)
+        await asyncio.sleep(5)  # Checks every 5 seconds
+
+@bot.tree.command(name="remindme", description="⏰ Set a one-time reminder for yourself.")
+@discord.app_commands.describe(time="When to remind? (e.g., 30m, 2h, 1d)", text="What should I remind you about?")
+async def remindme(interaction: discord.Interaction, time: str, text: str):
+    minutes = parse_reminder_time(time)
+    if minutes <= 0:
+        return await interaction.response.send_message("❌ **Invalid time format!** Use `30m` (minutes), `2h` (hours), or `1d` (days).", ephemeral=True)
+        
+    await interaction.response.defer()
+    
+    remind_at = datetime.utcnow() + timedelta(minutes=minutes)
+    REMINDERS.append({
+        "user_id": interaction.user.id,
+        "channel_id": interaction.channel_id,
+        "time": remind_at,
+        "text": text
+    })
+    
+    embed = discord.Embed(
+        title="⏰ Reminder Scheduled",
+        description=f"Got it! I will remind you here in **{time}**.\n\n📝 **Note:** *{text}*",
+        color=discord.Color.from_rgb(30, 144, 255)
+    )
+    await interaction.followup.send(embed=embed)
+
+
+# ------------------------------------------------------------------------------
+# 🔄 SECTION C: RECURRING AUTO-REMINDER LOOP (BAR-BAR REMIND KARNA)
+# ------------------------------------------------------------------------------
+
+async def auto_reminder_executor(guild_id: int, channel_id: int, text: str, interval_hours: float):
+    """Background task loop that sends recurring reminders safely"""
+    while True:
+        await asyncio.sleep(interval_hours * 3600) # Hours to seconds
+        
+        g_id_str = str(guild_id)
+        if g_id_str not in AUTO_REMINDERS or AUTO_REMINDERS[g_id_str].get("channel_id") != channel_id:
+            break # Exit loop if configuration was disabled by admin
+            
+        guild = bot.get_guild(guild_id)
+        if guild:
+            channel = guild.get_channel(channel_id)
+            if channel:
+                try:
+                    embed = discord.Embed(
+                        title="🔄 AUTOMATED SERVER REMINDER 🔄",
+                        description=f"✨ **Notice:**\n{text}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+                        color=discord.Color.from_rgb(255, 140, 0)
+                    )
+                    embed.set_footer(text=f"This reminder loops automatically every {interval_hours} hours.")
+                    await channel.send(embed=embed)
+                except Exception as e:
+                    print(f"Error executing auto-reminder loop: {e}")
+
+
+@bot.tree.command(name="set_auto_reminder", description="⚙️ Admin Only: Setup a recurring loop reminder (e.g., every 2 hours).")
+@discord.app_commands.describe(hours="Interval repeat timer in hours (e.g., 2, 0.5 for 30mins)", text="Reminder alert content text")
+@discord.app_commands.checks.has_permissions(manage_guild=True)
+async def set_auto_reminder(interaction: discord.Interaction, hours: float, text: str):
+    if hours <= 0:
+        return await interaction.response.send_message("❌ **Interval must be greater than 0!**", ephemeral=True)
+        
+    await interaction.response.defer()
+    g_id = str(interaction.guild_id)
+    
+    if g_id in AUTO_REMINDERS and "task" in AUTO_REMINDERS[g_id]:
+        AUTO_REMINDERS[g_id]["task"].cancel()
+        
+    loop_task = asyncio.create_task(auto_reminder_executor(interaction.guild_id, interaction.channel_id, text, hours))
+    
+    AUTO_REMINDERS[g_id] = {
+        "interval_hours": hours,
+        "channel_id": interaction.channel_id,
+        "text": text,
+        "task": loop_task
+    }
+    
+    embed = discord.Embed(
+        title="🔄 Automatic Loop Reminder Active",
+        description=f"✅ Core background workers activated successfully!\n\n"
+                    f"⏰ **Interval Schedule:** Every `{hours}` Hours\n"
+                    f"📍 **Target Channel:** {interaction.channel.mention}\n"
+                    f"📝 **Alert Payload:** {text}",
+        color=discord.Color.from_rgb(50, 205, 50)
+    )
+    await interaction.followup.send(embed=embed)
+
+
+@bot.tree.command(name="remove_auto_reminder", description="⚙️ Admin Only: Terminate and shut down any active loop reminders.")
+@discord.app_commands.checks.has_permissions(manage_guild=True)
+async def remove_auto_reminder(interaction: discord.Interaction):
+    g_id = str(interaction.guild_id)
+    
+    if g_id in AUTO_REMINDERS:
+        if "task" in AUTO_REMINDERS[g_id]:
+            AUTO_REMINDERS[g_id]["task"].cancel()
+        del AUTO_REMINDERS[g_id]
+        await interaction.response.send_message("🗑️ **Interval Shutdown Completed!** Active auto-reminder worker tasks have been successfully destroyed.")
+    else:
+        await interaction.response.send_message("❌ **No running loop reminder task patterns found** on this guild.", ephemeral=True)
 
 # Deploy System Launch Configuration
 keep_alive()
