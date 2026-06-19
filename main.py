@@ -1462,6 +1462,151 @@ async def on_message(message: discord.Message):
 async def admin_modules_error(interaction: discord.Interaction, error):
     if isinstance(error, discord.app_commands.errors.MissingPermissions):
         await interaction.response.send_message("❌ **Access Denied!** This feature module requires active `Administrator` permissions.", ephemeral=True)
+# ==============================================================================
+# 🚀 MODULE 9.0: ADVANCED ECONOMY, BOOSTER REWARDS & PERK SHOP
+# ==============================================================================
+
+# 1. AUTOMATIC NITRO BOOSTER REWARD DETECTOR
+@bot.event
+async def on_member_update(before: discord.Member, after: discord.Member):
+    # Check agar user ne abhi booster status start kiya hai
+    if not before.premium_since and after.premium_since:
+        user_id = str(after.id)
+        
+        # Load aur check account database
+        data = load_economy()
+        data = check_account(user_id, data)
+        
+        # 🪙 Reward: Give 10,000 bonus coins to the booster!
+        booster_bonus = 10000
+        data[user_id]["balance"] += booster_bonus
+        
+        # 🏅 Reward: Automatically append exclusive badge to their inventory
+        if "booster_elite" not in data[user_id]["inventory"]:
+            data[user_id]["inventory"].append("booster_elite")
+            
+        save_economy(data)
+        
+        # Try to send a gorgeous thank you announcement in a general/system channel
+        channel = after.guild.system_channel or after.guild.text_channels[0]
+        if channel:
+            embed = discord.Embed(
+                title="✨ ULTRA SERVER BOOST DETECTED ✨",
+                description=f"💖 Thank you so much for boosting the server, {after.mention}!\n\n"
+                            f"🎁 **Your Premium Booster Rewards have been added:**\n"
+                            f"🪙 +**{booster_bonus:,} Stardust Coins** injected into your wallet!\n"
+                            f"🏅 Unlocked Exclusive Badge: **🔮 Server Booster** (Check `/inventory`)\n\n"
+                            f"୨୧ *Your support keeps our galaxy shining bright!* ୨୧",
+                color=discord.Color.from_rgb(244, 127, 255)
+            )
+            embed.set_thumbnail(url=after.display_avatar.url)
+            await channel.send(embed=embed)
+
+
+# 2. UPDATING THE EXTENDED SHOP DICTIONARY WITH PERKS
+# Is database structural design ko hum slash commands me handle karenge safely
+PERK_SHOP = {
+    "vip_lounge": {"price": 15000, "display": "🎟️ Custom Temporary Channel", "desc": "Creates a private temporary text channel just for you for 24 hours."},
+    "premium_role": {"price": 20000, "display": "✨ Star Elite Role", "desc": "Unlocks the exclusive premium server role directly on your profile."}
+}
+
+# 3. SLASH COMMAND: BUY PERK FROM SHOP
+@bot.tree.command(name="buyperk", description="🎟️ Purchase exclusive server privileges and temporary channels!")
+@discord.app_commands.describe(perk_id="Choose from 'vip_lounge' or 'premium_role'")
+async def buyperk(interaction: discord.Interaction, perk_id: str):
+    await interaction.response.defer()
+    
+    user_id = str(interaction.user.id)
+    perk_id = perk_id.lower().strip()
+    
+    if perk_id not in PERK_SHOP:
+        return await interaction.followup.send("❌ **Invalid Perk ID!** Use `vip_lounge` or `premium_role`.", ephemeral=True)
+        
+    perk = PERK_SHOP[perk_id]
+    data = load_economy()
+    data = check_account(user_id, data)
+    
+    # Check user balance
+    if data[user_id]["balance"] < perk["price"]:
+        shortage = perk["price"] - data[user_id]["balance"]
+        return await interaction.followup.send(f"❌ **Insufficient Funds!** You need **{shortage} more coins** to buy {perk['display']}.", ephemeral=True)
+        
+    # Deduct funds
+    data[user_id]["balance"] -= perk["price"]
+    save_economy(data)
+    
+    # ─── PERK ACTION EXECUTION ───
+    
+    # Action A: Temp Text Channel Creation
+    if perk_id == "vip_lounge":
+        try:
+            guild = interaction.guild
+            # Owner permissions setup for the buyer
+            overwrites = {
+                guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
+            }
+            new_channel = await guild.create_text_channel(name=f"☁️-{interaction.user.display_name}-lounge", overwrites=overwrites)
+            
+            # Send intro greeting inside the temp channel
+            await new_channel.send(f"🎉 Welcome {interaction.user.mention} to your custom private lounge! You have full access here for the next 24 hours.")
+            
+            embed = discord.Embed(
+                title="🎟️ Perk Unlocked Successfully!",
+                description=f"Created your temporary custom space: {new_channel.mention}!\n"
+                            f"🪙 **{perk['price']} Coins** have been processed from your balance.",
+                color=discord.Color.from_rgb(147, 112, 219)
+            )
+            await interaction.followup.send(embed=embed)
+        except discord.Forbidden:
+            await interaction.followup.send("❌ **System Error:** Bot is missing `Manage Channels` permissions to execute this item.", ephemeral=True)
+            
+    # Action B: Give Special Permanent Server Role
+    elif perk_id == "premium_role":
+        try:
+            # Server me is naam ka role dhoondhein ya naya banayein
+            guild = interaction.guild
+            role_name = "Star Elite ✨"
+            existing_role = discord.utils.get(guild.roles, name=role_name)
+            
+            if not existing_role:
+                existing_role = await guild.create_role(name=role_name, color=discord.Color.from_rgb(255, 215, 0))
+                
+            if existing_role >= guild.me.top_role:
+                return await interaction.followup.send("❌ **Hierarchy Error:** Move the bot's role higher in integration settings.", ephemeral=True)
+                
+            await interaction.user.add_roles(existing_role)
+            
+            embed = discord.Embed(
+                title="✨ Premium Role Active ✨",
+                description=f"Congratulations! The legendary role {existing_role.mention} has been added to your account.",
+                color=discord.Color.gold()
+            )
+            await interaction.followup.send(embed=embed)
+        except discord.Forbidden:
+            await interaction.followup.send("❌ **System Error:** Bot is missing `Manage Roles` permission to award this badge.", ephemeral=True)
+
+
+# 4. SLASH COMMAND: BROWSE PERK SHOP LIST
+@bot.tree.command(name="perkshop", description="🛒 Browse the exclusive advanced server privilege marketplace!")
+async def perkshop(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="🔮 STARDUST ULTIMATE PERK MARKETPLACE 🔮",
+        description="Unlock exclusive server rights and permissions using your hard-earned coins!\n\n"
+                    "Use `/buyperk <perk_id>` to purchase.\n"
+                    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        color=discord.Color.from_rgb(230, 230, 250)
+    )
+    
+    for p_id, info in PERK_SHOP.items():
+        embed.add_field(
+            name=f"{info['display']} (`{p_id}`)",
+            value=f"🪙 Price: **{info['price']} Coins**\nℹ️ *{info['desc']}*",
+            inline=False
+        )
+        
+    embed.set_footer(text="✨ Luxury Server Customization Panel")
+    await interaction.response.send_message(embed=embed)
 
 # Deploy System Launch Configuration
 keep_alive()
