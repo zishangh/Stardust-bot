@@ -1986,7 +1986,7 @@ async def on_reaction_add(reaction: discord.Reaction, user: discord.User):
 
 
 # ==============================================================================
-# 🎨 FINAL BULLETPROOF CUSTOM EMBED BUILDER SYSTEM
+# 🎨 FINAL BULLETPROOF CUSTOM EMBED BUILDER SYSTEM (TIMESTAMP FIXED)
 # ==============================================================================
 
 class EmbedBuilderModal(discord.ui.Modal, title="🎨 Custom Embed Designer Panel"):
@@ -2016,14 +2016,14 @@ class EmbedBuilderModal(discord.ui.Modal, title="🎨 Custom Embed Designer Pane
             else:
                 rgb_color = discord.Color.blurple()
 
-            # Step 3: Build the beautiful embed configuration structure
+            # Step 3: Build the beautiful embed configuration structure (Timestamp Fixed Here)
             embed = discord.Embed(
                 title=self.embed_title.value,
                 description=self.embed_desc.value,
-                color=rgb_color
+                color=rgb_color,
+                timestamp=discord.utils.utcnow() # ✅ Ekdam sahi aur up-to-date tarika
             )
             embed.set_footer(text=f"Broadcasted by {interaction.user.display_name}")
-            embed.set_timestamp()
             
             # Step 4: Validate and attach image if present
             img_url = self.embed_img.value.strip() if self.embed_img.value else ""
@@ -2043,7 +2043,6 @@ class EmbedBuilderModal(discord.ui.Modal, title="🎨 Custom Embed Designer Pane
             await interaction.edit_original_response(content=f"❌ **Backend Processing Error:** `{str(e)}`\nPlease verify data syntax parameters.")
 
 
-# 📢 IS COMMAND KI WAJAH SE LOG GAYAB HUA THA - AB YEH FIR SE ADDED HAI
 @bot.tree.command(name="embed_builder", description="⚙️ Admin Only: Open the interactive pop-up custom embed builder UI sheet.")
 @discord.app_commands.describe(channel="Target channel to dispatch the announcement card")
 @discord.app_commands.checks.has_permissions(manage_messages=True)
