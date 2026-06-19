@@ -439,30 +439,30 @@ async def on_message(message: discord.Message):
 # ☕ MODULE 2: FUN INTERACTIONS (PREMIUM GIF SERVING ENGINE)
 # ====================================================================
 
-@bot.tree.command(name="serve", description="🍽️ Serve a premium global aesthetic food item from the Stardust Cafe")
+@bot.tree.command(name="serve", description="🍽️ Serve a 100% pure premium global aesthetic food item from the Stardust Cafe")
 @discord.app_commands.describe(
-    item="Choose the premium international item to serve",
+    item="Choose the premium safe item to serve",
     member="The customer who will receive this delicious treat"
 )
 @discord.app_commands.choices(item=[
-    # Original Menu
+    # Original Base Menu (Pure Veg / Soft Drinks)
     discord.app_commands.Choice(name="☕ Barista Coffee", value="coffee"),
     discord.app_commands.Choice(name="🍕 Woodfired Pizza", value="pizza"),
     discord.app_commands.Choice(name="🍔 Gourmet Burger", value="burger"),
     discord.app_commands.Choice(name="🥤 Chilled Drink", value="cold_drink"),
     discord.app_commands.Choice(name="🍛 Royal Indian Curry", value="indian_spicy"),
     discord.app_commands.Choice(name="🍩 Glazed Donuts", value="donuts"),
-    # New 10 International Countries Menu
-    discord.app_commands.Choice(name="🍣 Japan: Premium Sushi Platter", value="japan_sushi"),
-    discord.app_commands.Choice(name="🌮 Mexico: Crispy Loaded Tacos", value="mexico_tacos"),
+    # New 10 100% Pure & Safe International Choices
+    discord.app_commands.Choice(name="🇯🇵 Japan: Sweet Matcha Mochi", value="japan_mochi"),
+    discord.app_commands.Choice(name="🌮 Mexico: Cheesy Veg Quesadilla", value="mexico_quesadilla"),
     discord.app_commands.Choice(name="🥐 France: Butter Croissant & Cafe", value="france_croissant"),
     discord.app_commands.Choice(name="🍝 Italy: Creamy Alfredo Pasta", value="italy_pasta"),
-    discord.app_commands.Choice(name="🇨🇳 China: Steamed Dim Sum Box", value="china_dimsum"),
-    discord.app_commands.Choice(name="🇹🇷 Turkey: Authentic Doner Kebab", value="turkey_kebab"),
-    discord.app_commands.Choice(name="🇰🇷 South Korea: Spicy Rice Cakes (Tteokbokki)", value="korea_tteokbokki"),
-    discord.app_commands.Choice(name="🇹🇭 Thailand: Tangy Pad Thai Noodles", value="thailand_padthai"),
-    discord.app_commands.Choice(name="🇪🇸 Spain: Saffron Seafood Paella", value="spain_paella"),
-    discord.app_commands.Choice(name="🇺🇸 USA: Smoked BBQ Brisket", value="usa_bbq")
+    discord.app_commands.Choice(name="🇨🇳 China: Steamed Veg Dim Sum Box", value="china_dimsum"),
+    discord.app_commands.Choice(name="🇹🇷 Turkey: Royal Pistachio Baklava", value="turkey_baklava"),
+    discord.app_commands.Choice(name="🇰🇷 South Korea: Cheesy Rice Cakes (Tteokbokki)", value="korea_tteokbokki"),
+    discord.app_commands.Choice(name="🇹🇭 Thailand: Mango Sticky Rice Dessert", value="thailand_mangorice"),
+    discord.app_commands.Choice(name="🇪🇸 Spain: Crispy Sweet Churros Box", value="spain_churros"),
+    discord.app_commands.Choice(name="🇺🇸 USA: Loaded Premium Waffles", value="usa_waffles")
 ])
 async def serve(interaction: discord.Interaction, item: str, member: discord.Member):
     await interaction.response.defer()
@@ -504,23 +504,23 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
             "origin": "Sweet Treats Corner 🌸",
             "line": "A heavenly box of soft, airy donuts dipped in premium milk chocolate and topped with colorful pastel flakes."
         },
-        "japan_sushi": {
-            "title": "🍣 JAPAN: MASTER SAKURA DELICACY",
-            "item_name": "Premium Sushi & Sashimi Platter",
-            "origin": "Tokyo, Japan 🇯🇵",
-            "line": "Handcrafted vinegared rice rolled with fresh premium seafood, served beautifully with authentic wasabi and pickled ginger! 🌸"
+        "japan_mochi": {
+            "title": "🇯🇵 JAPAN: TRADITIONAL MATCHA HARMONY",
+            "item_name": "Sweet Green Tea Matcha Mochi",
+            "origin": "Kyoto, Japan 🇯🇵",
+            "line": "Soft, chewy pounded rice cakes filled with premium aromatic sweet green tea matcha cream. A peaceful bliss! 🌸"
         },
-        "mexico_tacos": {
-            "title": "🌮 MEXICO: SPICY STREET FEAST",
-            "item_name": "Crispy Loaded Tacos",
-            "origin": "Oaxaca, Mexico 🇲🇽",
-            "line": "Crunchy corn shells packed tightly with seasoned minced meat, zesty salsa fresco, rich guacamole, and sharp cheddar! 🔥"
+        "mexico_quesadilla": {
+            "title": "🌮 MEXICO: FIESTA CHEESY CRUNCH",
+            "item_name": "Loaded Veggie Quesadilla",
+            "origin": "Puebla, Mexico 🇲🇽",
+            "line": "Grilled warm tortillas packed full with melting Monterey Jack cheese, sweet corn, bell peppers, and zesty herbs! 🧀"
         },
         "france_croissant": {
             "title": "🥐 FRANCE: ROYAL PARISIAN BREAKFAST",
             "item_name": "Golden Butter Croissant & Cafe",
             "origin": "Paris, France 🇫🇷",
-            "line": "Flaky, multi-layered warm pastry baked with pure French butter, serving an elite melt-in-your-mouth luxury vibe! ✨"
+            "line": "Flaky, multi-layered warm pastry baked with pure French butter, serving an elite melt-inyour-mouth luxury vibe! ✨"
         },
         "italy_pasta": {
             "title": "🍝 ITALY: TUSCAN HARVEST",
@@ -530,15 +530,15 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
         },
         "china_dimsum": {
             "title": "🇨🇳 CHINA: IMPERIAL DIM SUM BOX",
-            "item_name": "Steamed Artisan Dim Sums",
+            "item_name": "Steamed Artisan Veg Dim Sums",
             "origin": "Guangzhou, China 🇨🇳",
-            "line": "A traditional steaming bamboo basket containing delicate, translucent crystal dumplings bursting with savory goodness! 🥢"
+            "line": "A traditional steaming bamboo basket containing delicate, translucent crystal dumplings filled with finely chopped fresh greens! 🥢"
         },
-        "turkey_kebab": {
-            "title": "🇹🇷 TURKEY: ANATOLIAN GRAND BAZAAR",
-            "item_name": "Authentic Doner Kebab Wrap",
-            "origin": "Istanbul, Turkey 🇹🇷",
-            "line": "Slow-roasted tender meat shaved finely, wrapped in warm lavash bread with crisp onions, herbs, and garlic yogurt sauce! 🌯"
+        "turkey_baklava": {
+            "title": "🇹🇷 TURKEY: SULTAN'S PALACE DESSERT",
+            "item_name": "Royal Pistachio Baklava",
+            "origin": "Gaziantep, Turkey 🇹🇷",
+            "line": "Rich, sweet pastry made of layers of flaky phyllo dough filled with crushed premium pistachios and sweetened with pure syrup! 🍯"
         },
         "korea_tteokbokki": {
             "title": "🇰🇷 SOUTH KOREA: SEOUL STREET KITCHEN",
@@ -546,30 +546,36 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
             "origin": "Seoul, South Korea 🇰🇷",
             "line": "Chewy, cylindrical rice cakes simmered beautifully in a fiery, sweet gochujang chili sauce, topped with melted mozzarella! 🌶️"
         },
-        "thailand_padthai": {
-            "title": "🇹🇭 THAILAND: BANGKOK NIGHT MARKET",
-            "item_name": "Tangy Stir-Fried Pad Thai",
+        "thailand_mangorice": {
+            "title": "🇹🇭 THAILAND: EXOTIC SIAM TROPICS",
+            "item_name": "Sweet Mango Sticky Rice",
             "origin": "Bangkok, Thailand 🇹🇭",
-            "line": "Stir-fried rice noodles tossed with tofu, crushed peanuts, fresh bean sprouts, and a signature sweet-tangy tamarind glaze! 🍋"
+            "line": "Warm glutinous rice cooked in sweet coconut milk, served with fresh, juicy slices of ripened golden mangoes! 🥭"
         },
-        "spain_paella": {
-            "title": "🇪🇸 SPAIN: MEDITERRANEAN TRADITION",
-            "item_name": "Saffron Seafood Paella",
-            "origin": "Valencia, Spain 🇪🇸",
-            "line": "A majestic pan of aromatic saffron rice slow-cooked with fresh prawns, mussels, and calamari, bursting with coastal flavors! ⚓"
+        "spain_churros": {
+            "title": "🇪🇸 SPAIN: MADRID STREET TREAT",
+            "item_name": "Crispy Cinnamon Churros Box",
+            "origin": "Madrid, Spain 🇪🇸",
+            "line": "Golden fried pastry dough dusted beautifully with cinnamon sugar, served with a cup of rich, warm melted milk chocolate! 🍫"
         },
-        "usa_bbq": {
-            "title": "🇺🇸 USA: TEXAS PITMASTER EXCLUSIVE",
-            "item_name": "Smoked Hickory BBQ Brisket",
-            "origin": "Texas, USA 🇺🇸",
-            "line": "Premium cut beef brisket smoked low and slow for 14 hours over hickory wood, coated in a thick, sweet and tangy BBQ glaze! 🪵"
+        "usa_waffles": {
+            "title": "🇺🇸 USA: CLASSIC DOWNTOWN DINER",
+            "item_name": "Loaded Premium Buttermilk Waffles",
+            "origin": "New York, USA 🇺🇸",
+            "line": "Fluffy, crispy golden waffles topped with sweet maple syrup, a dollop of fresh whipped cream, and wild berries! 🧇"
         }
     }
 
     selected = menu_data.get(item)
     
-    # Redesigned description layout to force Discord to make the member mention clickable and blue!
-    desc_template = (
+    # Elegant embed using native Discord structures to ensure mentions parse into live links
+    embed = discord.Embed(
+        title=f"👑 ─── {selected['title']} ─── 👑",
+        color=discord.Color.from_rgb(245, 238, 227)
+    )
+    
+    # Plain text assignment blocks that natively parse into blue mentions inside Discord clients
+    embed.description = (
         f"**👑 International Order Fulfilled!**\n\n"
         f"**🔹 Guest Served:** {member.mention}\n"
         f"**🔹 Gourmet Item:** `{selected['item_name']}`\n"
@@ -578,14 +584,11 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
         f"─── *Enjoy your elite dining experience!* ───"
     )
     
-    embed = discord.Embed(
-        title=f"👑 ─── {selected['title']} ─── 👑",
-        description=desc_template,
-        color=discord.Color.from_rgb(245, 238, 227)  # Aesthetic Warm Beige
-    )
     embed.set_footer(text=f"✨ Stardust Butler System • Order requested by {interaction.user.name}")
     
     await interaction.followup.send(embed=embed)
+    
+        
     
 # =========================================================
 # 🛡️ MODULE 3: MODERATION SUITE (FIXED BAN TYPO)
