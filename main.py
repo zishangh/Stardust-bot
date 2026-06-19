@@ -464,64 +464,80 @@ async def on_message(message: discord.Message):
     discord.app_commands.Choice(name="🇪🇸 Spain: Crispy Sweet Churros Box", value="spain_churros"),
     discord.app_commands.Choice(name="🇺🇸 USA: Loaded Premium Waffles", value="usa_waffles")
 ])
+@bot.tree.command(name="serve", description="🛎️ Serve a premium global meal to a highly distinguished member")
 async def serve(interaction: discord.Interaction, item: str, member: discord.Member):
     await interaction.response.defer()
     
     menu_data = {
-        "coffee": {
-            "title": "☕ STARDUST PREMIUM BARISTA",
-            "item_name": "Freshly Brewed Barista Coffee",
-            "origin": "Stardust Cafe House Blend ✨",
-            "line": "A warm, aromatic blend crafted with golden coffee beans and premium cream froth. Served hot just for you! 🌸"
-        },
-        "pizza": {
-            "title": "🍕 WOODFIRED ITALIAN DELIGHT",
-            "item_name": "Authentic Woodfired Pizza",
-            "origin": "Naples Heritage 🇮🇹",
-            "line": "A piping hot crust loaded with premium stretching mozzarella, fresh basil, and signature rich marinara sauce! 🧀"
-        },
-        "burger": {
-            "title": "🍔 CLASSIC GOURMET STACK",
-            "item_name": "Gourmet Crispy Stack Burger",
-            "origin": "Chef's Special 🧑‍🍳",
-            "line": "A giant, juicy premium patty layered with melting cheddar, crunchy lettuce, and a secret smoky chef's sauce! 🥓"
-        },
-        "cold_drink": {
-            "title": "🥤 ICY REFRESHING BLISS",
-            "item_name": "Chilled Bubble Icy Soda",
-            "origin": "Arctic Frost Edition 🧊",
-            "line": "An absolute freeze experience! A crystal-clear sparkling beverage bubbling with icy freshness to cool your soul."
-        },
-        "indian_spicy": {
-            "title": "🍛 ROYAL INDIAN SPICE PLATTER",
-            "item_name": "Aromatic Royal Curry Platter",
-            "origin": "Imperial India 🇮🇳",
-            "line": "A rich, steaming hot authentic curry cooked with secret traditional spices, fresh cream, and pure love. 🔥🌶️"
-        },
-        "donuts": {
-            "title": "🍩 GLAZED SWEET CONFECTION",
-            "item_name": "Premium Glazed Chocolate Donuts",
-            "origin": "Sweet Treats Corner 🌸",
-            "line": "A heavenly box of soft, airy donuts dipped in premium milk chocolate and topped with colorful pastel flakes."
-        },
-        "japan_mochi": {
-            "title": "🇯🇵 JAPAN: TRADITIONAL MATCHA HARMONY",
-            "item_name": "Sweet Green Tea Matcha Mochi",
-            "origin": "Kyoto, Japan 🇯🇵",
-            "line": "Soft, chewy pounded rice cakes filled with premium aromatic sweet green tea matcha cream. A peaceful bliss! 🌸"
-        },
-        "mexico_quesadilla": {
-            "title": "🌮 MEXICO: FIESTA CHEESY CRUNCH",
-            "item_name": "Loaded Veggie Quesadilla",
-            "origin": "Puebla, Mexico 🇲🇽",
-            "line": "Grilled warm tortillas packed full with melting Monterey Jack cheese, sweet corn, bell peppers, and zesty herbs! 🧀"
-        },
-        "france_croissant": {
-            "title": "🥐 FRANCE: ROYAL PARISIAN BREAKFAST",
-            "item_name": "Golden Butter Croissant & Cafe",
-            "origin": "Paris, France 🇫🇷",
-            "line": "Flaky, multi-layered warm pastry baked with pure French butter, serving an elite melt-inyour-mouth luxury vibe! ✨"
-        },
+        "coffee": {"title": "BARISTA ESPRESSO", "item_name": "Premium Barista Coffee", "origin": "Milan, Italy 🇮🇹", "line": "A rich, dark aromatic espresso topped with perfect velvety crema."},
+        "donuts": {"title": "GLAZED LUXURY", "item_name": "Gourmet Glazed Donuts", "origin": "Belgium 🇧🇪", "line": "Fluffy, artisanal dough glazed with premium melted white chocolate."},
+        "cold_drink": {"title": "CRYSTAL ICY COLD", "item_name": "Chilled Icy Soda Pop", "origin": "Atlanta, USA 🇺🇸", "line": "An ice-cold sparkling beverage served with fresh mint leaves."},
+        "burger": {"title": "GOURMET STACK", "item_name": "Artisanal Double-Stack Burger", "origin": "Hamburg, Germany 🇩🇪", "line": "Premium grilled cutlet layered with aged cheddar and secret house sauce."},
+        "pizza": {"title": "WOODFIRED ITALIAN", "item_name": "Artisanal Neapolitan Pizza", "origin": "Naples, Italy 🇮🇹", "line": "Authentic sourdough crust topped with fresh mozzarella and torn basil."},
+        "indian_spicy": {"title": "ROYAL CURRY EXPERT", "item_name": "Shahi Indian Mughlai Curry", "origin": "Delhi, India 🇮🇳", "line": "A rich, slow-cooked buttery gravy infused with exotic royal spices."},
+        "japan_mochi": {"title": "MATCHA SUPREME", "item_name": "Sweet Uji Matcha Mochi", "origin": "Kyoto, Japan 🇯🇵", "line": "Soft, chewy rice cake outer layer filled with sweet premium red bean paste."},
+        "mexico_quesadilla": {"title": "CHEESY SUPREME", "item_name": "Smoked Pepper Quesadilla", "origin": "Puebla, Mexico 🇲🇽", "line": "Toasted tortilla loaded with melted Monterey Jack cheese and fresh jalapenos."},
+        "france_croissant": {"title": "BUTTER CRUISE", "item_name": "Flaky Flurries Croissant", "origin": "Paris, France 🇫🇷", "line": "Light, buttery puff pastry layers crafted by elite French artisans."},
+        "italy_pasta": {"title": "CREAMY ALFREDO", "item_name": "Truffle Mushroom Alfredo", "origin": "Rome, Italy 🇮🇹", "line": "Al dente fettuccine tossed in a rich parmesan and wild truffle cream sauce."},
+        "china_dimsum": {"title": "STEAMED BLISS", "item_name": "Crystal Veg Dim Sum Box", "origin": "Guangdong, China 🇨🇳", "line": "Translucent dumpling wraps tightly packing finely minced premium farm greens."},
+        "turkey_baklava": {"title": "ROYAL PISTACHIO", "item_name": "Layered Honey Gold Baklava", "origin": "Gaziantep, Turkey 🇹🇷", "line": "Crispy golden filo sheets dripping with organic honey and crushed pistachios."},
+        "korea_tteokbokki": {"title": "SEOUL SPICY SOUL", "item_name": "Cheesy Gochujang Tteokbokki", "origin": "Seoul, South Korea 🇰🇷", "line": "Simmered chewy cylindrical rice cakes bathed in fiery, sweet chili glaze."},
+        "thailand_mangorice": {"title": "SIAM SWEET", "item_name": "Sweet Coconut Mango Rice", "origin": "Bangkok, Thailand 🇹🇭", "line": "Warm fragrant sticky rice paired with sweet yellow mango slices and coconut milk."},
+        "spain_churros": {"title": "CRISPY CINNAMON", "item_name": "Golden Sweet Churros", "origin": "Madrid, Spain 🇪🇸", "line": "Golden fried pastry dough dusted beautifully with cinnamon sugar, served with a cup of rich, warm chocolate dip."},
+        "usa_waffles": {"title": "USA: CLASSIC DOWNTOWN DINER", "item_name": "Loaded Premium Buttermilk Waffles", "origin": "New York, USA 🇺🇸", "line": "Fluffy, crispy golden waffles topped with sweet maple syrup, a dollop of fresh whipped cream, and wild berries."}
+    }
+    
+    if item not in menu_data:
+        await interaction.followup.send("❌ Error: Invalid menu item selected.")
+        return
+
+    selected = menu_data.get(item)
+    
+    # 💰 ============ ECONOMY LINKING SYSTEM ============
+    prices = {
+        "coffee": 50, "donuts": 60, "cold_drink": 70, "burger": 100, "pizza": 120, "indian_spicy": 150,
+        "japan_mochi": 180, "mexico_quesadilla": 200, "france_croissant": 220, "italy_pasta": 250,
+        "china_dimsum": 260, "turkey_baklava": 280, "korea_tteokbokki": 300, "thailand_mangorice": 320,
+        "spain_churros": 340, "usa_waffles": 350
+    }
+    
+    item_cost = prices.get(item, 0)
+    user_id = str(interaction.user.id)
+    eco_data = load_economy()
+    eco_data = check_account(user_id, eco_data)
+    
+    if eco_data[user_id]["balance"] < item_cost:
+        embed_fail = discord.Embed(
+            title="💸 INSUFFICIENT FUNDS",
+            description=f"❌ {interaction.user.mention}, aapke paas `{selected['item_name']}` serve karne ke liye paryapt coins nahi hain!\n\n💰 **Required:** `{item_cost} Coins` | 💳 **Your Balance:** `{eco_data[user_id]['balance']} Coins`\n\n💡 *Coins kamane ke liye `/daily` command use karein!*",
+            color=discord.Color.red()
+        )
+        await interaction.followup.send(embed=embed_fail)
+        return
+        
+    eco_data[user_id]["balance"] -= item_cost
+    save_economy(eco_data)
+    # ===================================================
+
+    desc_template = (
+        f"**👑 International Order Fulfilled!**\n\n"
+        f"**🔹 Gourmet Item:** `{selected['item_name']}`\n"
+        f"**🔹 Culinary Origin:** *{selected['origin']}*\n"
+        f"💸 **Cost Deducted:** `{item_cost} Stardust Coins`\n\n"
+        f"ℹ️ *{selected['line']}*\n\n"
+        f"─── *Enjoy your elite dining experience!* ───"
+    )
+    
+    embed = discord.Embed(
+        title=f"👑 ─── {selected['title']} ─── 👑",
+        description=desc_template,
+        color=discord.Color.from_rgb(245, 238, 227)
+    )
+    embed.set_footer(text=f"✨ Stardust Butler System • Balance Left: {eco_data[user_id]['balance']} Coins")
+    
+    content_text = f"🛎️ {member.mention}, you have been served a premium meal!"
+    await interaction.followup.send(content=content_text, embed=embed)
+
         "italy_pasta": {
             "title": "🍝 ITALY: TUSCAN HARVEST",
             "item_name": "Creamy Alfredo Fettuccine Pasta",
