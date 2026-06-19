@@ -961,6 +961,167 @@ async def inventory(interaction: discord.Interaction):
         
     embed.set_footer(text="✨ Showcase your inventory to your friends!")
     await interaction.response.send_message(embed=embed)
+# ==============================================================================
+# 💎 MODULE 6.0: ADMIN ECONOMY, LEADERBOARD & ADVANCED GIVEAWAYS
+# ==============================================================================
+
+import asyncio
+import random
+import re
+
+# 1. ADMIN COMMAND: ADD MONEY
+@bot.tree.command(name="addmoney", description="⚙️ Admin Only: Add Stardust Coins to a member's wallet!")
+@discord.app_commands.describe(member="The member receiving the coins", amount="Amount of coins to add")
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def addmoney(interaction: discord.Interaction, member: discord.Member, amount: int):
+    if amount <= 0:
+        return await interaction.response.send_message("❌ **Amount must be greater than 0!**", ephemeral=True)
+        
+    await interaction.response.defer()
+    user_id = str(member.id)
+    
+    data = load_economy()
+    data = check_account(user_id, data)
+    
+    data[user_id]["balance"] += amount
+    save_economy(data)
+    
+    embed = discord.Embed(
+        title="✨ Stardust Treasury Mint ✨",
+        description=f"Successfully added **{amount:,} Stardust Coins** to {member.mention}'s vault! 🪙",
+        color=discord.Color.from_rgb(255, 215, 0)
+    )
+    embed.set_footer(text=f"Authorized by: {interaction.user.display_name}")
+    await interaction.followup.send(embed=embed)
+
+@addmoney.error
+async def addmoney_error(interaction: discord.Interaction, error):
+    if isinstance(error, discord.app_commands.errors.MissingPermissions):
+        await interaction.response.send_message("❌ **Permission Denied!** Only server Administrators can use this command.", ephemeral=True)
+
+
+# 2. ECONOMY RANK / LEADERBOARD COMMAND
+@bot.tree.command(name="richest", description="🏆 View the top 10 richest members in the server!")
+async def richest(interaction: discord.Interaction):
+    await interaction.response.defer()
+    data = load_economy()
+    
+    # Sort users by balance descending
+    sorted_users = sorted(data.items(), key=lambda item: item[0] if isinstance(item[1], int) else item[1].get("balance", 0), reverse=True)
+    
+    embed = discord.Embed(
+        title="👑 STARDUST WEALTH LEADERBOARD 👑",
+        description="Here are the top elite billionaires of the server!\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        color=discord.Color.from_rgb(230, 230, 250)
+    )
+    
+    leaderboard_text = ""
+    rank = 1
+    for user_id, user_data in sorted_users[:10]:
+        # Handle old int data type vs new dict data type safely
+        balance = user_data if isinstance(user_data, int) else user_data.get("balance", 0)
+        
+        member = interaction.guild.get_member(int(user_id))
+        name = member.display_name if member else f"User ({user_id})"
+        
+        # Add medals for top 3
+        if rank == 1: medal = "🥇"
+        elif rank == 2: medal = "🥈"
+        elif rank == 3: medal = "🥉"
+        else: medal = f"`#{rank}` "
+        
+        leaderboard_text += f"{medal} **{name}** — 🪙 `{balance:,}` Coins\n"
+        rank += 1
+        
+    embed.description += f"\n{leaderboard_text or '*No records found.*'}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    embed.set_footer(text="✨ Grinding pays off! Check your balance with /wallet")
+    await interaction.followup.send(embed=embed)
+
+
+# 3. LUXURY & PROFESSIONAL GIVEAWAY SYSTEM
+def parse_duration(duration_str: str) -> int:
+    """Helper to convert 5h, 30m, 1d into seconds"""
+    match = re.match(r"(\d+)([smhd])", duration_str.lower().strip())
+    if not match:
+        return 0
+    amount, unit = match.groups()
+    amount = int(amount)
+    if unit == 's': return amount
+    if unit == 'm': return amount * 60
+    if unit == 'h': return amount * 3600
+    if unit == 'd': return amount * 86400
+    return 0
+
+@bot.tree.command(name="gstart", description="🎉 Launch a premium aesthetic giveaway!")
+@discord.app_commands.describe(duration="Time duration (e.g., 30m, 5h, 1d)", winners="Number of winners", prize="The prize description")
+@discord.app_commands.checks.has_permissions(manage_guild=True)
+async def gstart(interaction: discord.Interaction, duration: str, winners: int, prize: str):
+    seconds = parse_duration(duration)
+    if seconds <= 0:
+        return await interaction.response.send_message("❌ **Invalid duration format!** Use `30m` (minutes), `5h` (hours), or `1d` (days).", ephemeral=True)
+    if winners <= 0:
+        return await interaction.response.send_message("❌ **Winners must be at least 1!**", ephemeral=True)
+        
+    await interaction.response.defer()
+    
+    # Clean professional embed setup matching the provided asset styling
+    embed = discord.Embed(
+        title=f"🎁 {prize.upper()} 🎁",
+        description=f"♡ React with \"🎉\" to join!\n\n"
+                    f"♡ **Ends:** in {duration}\n"
+                    f"♡ **Hosted by:** {interaction.user.mention}\n"
+                    f"♡ **Winners:** {winners}\n\n"
+                    f"୨୧ *All extra entries from roles stack! Check channels for perks.* ୨୧\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        color=discord.Color.from_rgb(186, 85, 211)
+    )
+    embed.set_thumbnail(url="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbW9pM3R5Y3B4NXc0M3B5M3B5M3B5M3B5M3B5M3B5M3B5JmN0PWc/l3q2zVr6cu95nF6O4/giphy.gif")
+    embed.set_footer(text="💧 Click the reaction below to enter!")
+    
+    # Send message and add reaction
+    g_message = await interaction.followup.send(embed=embed, wait=True)
+    await g_message.add_reaction("🎉")
+    
+    # Wait for the duration
+    await asyncio.sleep(seconds)
+    
+    # Fetch final message data to get accurate reactions
+    try:
+        g_message = await interaction.channel.fetch_message(g_message.id)
+    except discord.NotFound:
+        return  # Giveaway channel or message was deleted
+        
+    reaction = discord.utils.get(g_message.reactions, emoji="🎉")
+    users = [user async for user in reaction.users() if not user.bot]
+    
+    if len(users) == 0:
+        end_embed = discord.Embed(
+            title="🎉 GIVEAWAY ENDED 🎉",
+            description=f"**Prize:** {prize}\n\n❌ **No entries received.** No winners could be determined!",
+            color=discord.Color.red()
+        )
+        return await g_message.edit(embed=end_embed)
+        
+    # Choose winners dynamically
+    chosen_winners = random.sample(users, min(len(users), winners))
+    winner_mentions = ", ".join([winner.mention for winner in chosen_winners])
+    
+    end_embed = discord.Embed(
+        title="🎉 GIVEAWAY CONCLUDED 🎉",
+        description=f"♡ **Prize:** {prize}\n"
+                    f"♡ **Hosted by:** {interaction.user.mention}\n"
+                    f"♡ **Winners:** {winner_mentions}\n\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"✨ Congratulations! Please contact staff or use commands to claim your reward! ✨",
+        color=discord.Color.from_rgb(50, 205, 50)
+    )
+    await g_message.edit(embed=end_embed)
+    await interaction.channel.send(f"🎊 Congratulations {winner_mentions}! You won the giveaway for **{prize}**! 🎊")
+
+@gstart.error
+async def gstart_error(interaction: discord.Interaction, error):
+    if isinstance(error, discord.app_commands.errors.MissingPermissions):
+        await interaction.response.send_message("❌ **Permission Denied!** You need `Manage Server` permissions to host giveaways.", ephemeral=True)
 
 # Deploy System Launch Configuration
 keep_alive()
