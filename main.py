@@ -455,50 +455,28 @@ async def on_message(message: discord.Message):
 async def serve(interaction: discord.Interaction, item: str, member: discord.Member):
     await interaction.response.defer()
     
-    menu_data = {
-        "coffee": {
-            "title": "Stardust Premium Coffee Order! ☕",
-            "desc": f"A warm, freshly brewed premium barista coffee has been served to {member.mention}! ✨",
-            "gif": "https://media.tenor.com/4yNf9_N9X08AAAAC/anime-coffee.gif"
-        },
-        "pizza": {
-            "title": "Woodfired Cheesy Pizza Delivery! 🍕",
-            "desc": f"An authentic Italian hot woodfired pizza loaded with melting cheese has been served to {member.mention}! 🧀",
-            "gif": "https://media.tenor.com/Z49b8P81w7IAAAAC/anime-pizza.gif"
-        },
-        "burger": {
-            "title": "Classic Gourmet Stack Burger! 🍔",
-            "desc": f"A giant premium crispy patty burger layered with fresh veggies and smoky sauce is served to {member.mention}! 🥓",
-            "gif": "https://media.tenor.com/6a_UshvVw7YAAAAC/anime-burger.gif"
-        },
-        "cold_drink": {
-            "title": "Chilled Icy Soft Drink! 🥤",
-            "desc": f"An ice-cold refreshing beverage fizzy with bubbles has been perfectly served to {member.mention}! 🧊",
-            "gif": "https://media.tenor.com/E8b89Yv27m8AAAAC/anime-drink.gif"
-        },
-        "indian_spicy": {
-            "title": "Royal Indian Spicy Platter! 🍛",
-            "desc": f"A rich, steaming hot aromatic Indian spicy curry served with premium aesthetic vibes directly to {member.mention}! 🔥🌶️",
-            "gif": "https://media.tenor.com/vH_f9u4F97EAAAAC/anime-curry.gif"
-        },
-        "donuts": {
-            "title": "Glazed Premium Sweet Donuts! 🍩",
-            "desc": f"A box of colorful premium glazed donuts with sweet chocolate flakes has been served to {member.mention}! 🌸",
-            "gif": "https://media.tenor.com/p1_wLgS-M34AAAAC/anime-donut.gif"
-        }
+    menu_gifs = {
+        "coffee": "https://media.tenor.com/4yNf9_N9X08AAAAC/anime-coffee.gif",
+        "pizza": "https://media.tenor.com/Z49b8P81w7IAAAAC/anime-pizza.gif",
+        "burger": "https://media.tenor.com/6a_UshvVw7YAAAAC/anime-burger.gif",
+        "cold_drink": "https://media.tenor.com/E8b89Yv27m8AAAAC/anime-drink.gif",
+        "indian_spicy": "https://media.tenor.com/vH_f9u4F97EAAAAC/anime-curry.gif",
+        "donuts": "https://media.tenor.com/p1_wLgS-M34AAAAC/anime-donut.gif"
     }
 
-    selected = menu_data.get(item)
+    selected_gif = menu_gifs.get(item)
+    item_names = {
+        "coffee": "☕ hot premium coffee",
+        "pizza": "🍕 woodfired cheesy pizza",
+        "burger": "🍔 gourmet stack burger",
+        "cold_drink": "🥤 chilled icy soft drink",
+        "indian_spicy": "🍛 royal Indian spicy platter",
+        "donuts": "🍩 glazed sweet donut"
+    }
     
-    embed = discord.Embed(
-        title=selected["title"],
-        description=selected["desc"],
-        color=discord.Color.from_rgb(245, 238, 227)
-    )
-    embed.set_footer(text=f"Stardust Cafe Management • Order requested by {interaction.user.name}")
-    
-    content_text = f"🍽️ {interaction.user.mention} serves a delicious item to {member.mention}!\n{selected['gif']}"
-    await interaction.followup.send(content=content_text, embed=embed)
+    # Bina embed ke direct clean path—Discord automatic text link ko ek premium badi GIF mein convert kar dega!
+    content_text = f"🍽️ {interaction.user.mention} serves a delicious **{item_names[item]}** to {member.mention}!\n{selected_gif}"
+    await interaction.followup.send(content=content_text)
     
 # =========================================================
 # 🛡️ MODULE 3: MODERATION SUITE (FIXED BAN TYPO)
