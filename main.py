@@ -455,6 +455,7 @@ async def on_message(message: discord.Message):
 async def serve(interaction: discord.Interaction, item: str, member: discord.Member):
     await interaction.response.defer()
     
+    # Direct Tenor Raw Media Links (Super Compatible)
     menu_gifs = {
         "coffee": "https://media.tenor.com/4yNf9_N9X08AAAAC/anime-coffee.gif",
         "pizza": "https://media.tenor.com/Z49b8P81w7IAAAAC/anime-pizza.gif",
@@ -473,14 +474,10 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
         "donuts": "🍩 glazed sweet donut"
     }
     
-    # Clean Text Message Format
-    content_text = f"🍽️ {interaction.user.mention} serves a delicious **{item_names[item]}** to {member.mention}!"
+    # Is baar hum koi embed object use nahi kar rahe hain. No blank boxes!
+    content_text = f"🍽️ {interaction.user.mention} serves a delicious **{item_names[item]}** to {member.mention}!\n{menu_gifs[item]}"
     
-    # DISCORD DIRECT ATTACHMENT METHOD: Forcefully injects the image into chat canvas
-    embed = discord.Embed(color=discord.Color.from_rgb(245, 238, 227))
-    embed.set_image(url=menu_gifs[item])
-    
-    await interaction.followup.send(content=content_text, embed=embed)
+    await interaction.followup.send(content=content_text)
     
 # =========================================================
 # 🛡️ MODULE 3: MODERATION SUITE (FIXED BAN TYPO)
