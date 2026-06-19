@@ -435,24 +435,74 @@ async def on_message(message: discord.Message):
     save_db(db)
     await bot.process_commands(message)
     
-# =========================================================
-# 🍧 MODULE 2: FUN INTERACTIONS (GIF ENDPOINT FIXED)
-# =========================================================
+# ====================================================================
+# ☕ MODULE 2: FUN INTERACTIONS (PREMIUM CAFE MENU & ENDPOINTS)
+# ====================================================================
 
-@bot.tree.command(name="serve", description="☕ Serve a fresh brewed cafe drink to a server member")
-async def serve(interaction: discord.Interaction, member: discord.Member):
-    embed = discord.Embed(title="Stardust Cafe Order! (⁠ ⁠╹⁠▽⁠╹⁠ ⁠)", description=f"**A warm, fresh coffee has been served to {member.mention}!** ☕", color=discord.Color.from_rgb(245, 222, 179))
-    embed.set_image(url="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3h0Y3h4ZzZ0bWp3NW4xeWxtdDJvN2d5dGtsamFlZ3R0ZzZmdDZzMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/1498bN8wK8zT0c/giphy.gif")
-    embed.set_footer(text="Have a cozy day! (⁠◍⁠•⁠ᴗ⁠•⁠◍⁠)")
-    await interaction.response.send_message(content=f"☕ {interaction.user.mention} serves coffee to {member.mention}!", embed=embed)
+@bot.tree.command(name="serve", description="🍽️ Serve delicious premium food items with high-quality dynamic GIFs")
+@discord.app_commands.describe(
+    item="Choose what you want to serve",
+    member="The lucky customer to receive the order"
+)
+@discord.app_commands.choices(item=[
+    discord.app_commands.Choice(name="☕ Coffee", value="coffee"),
+    discord.app_commands.Choice(name="🍕 Pizza", value="pizza"),
+    discord.app_commands.Choice(name="🍔 Burger", value="burger"),
+    discord.app_commands.Choice(name="🥤 Cold Drink", value="cold_drink"),
+    discord.app_commands.Choice(name="🍛 Indian Spicy Curry", value="indian_spicy"),
+    discord.app_commands.Choice(name="🍩 Donuts", value="donuts")
+])
+async def serve(interaction: discord.Interaction, item: str, member: discord.Member):
+    await interaction.response.defer()
+    
+    # 🌟 High Quality Visual Assets Database
+    menu_data = {
+        "coffee": {
+            "title": "Stardust Premium Coffee Order! ☕",
+            "desc": f"A warm, freshly brewed premium barista coffee has been served to {member.mention}! ✨",
+            "gif": "https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExbXN6MTh5bXN0YnZ6d3g0M3Z6N3A5bndqd3NmdXNxeWd0N3A1ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/TlK63Er4gKHILXqv0Jg/giphy.gif"
+        },
+        "pizza": {
+            "title": "Woodfired Cheesy Pizza Delivery! 🍕",
+            "desc": f"An authentic Italian hot woodfired pizza loaded with melting cheese has been served to {member.mention}! 🧀",
+            "gif": "https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExbXN6OWVwNmIydmRocDN6YTRhYWd2YTh6YWpybnZtdWpkeWRzbXFkeSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/1395cV7aU6dP9K/giphy.gif"
+        },
+        "burger": {
+            "title": "Classic Gourmet Stack Burger! 🍔",
+            "desc": f"A giant premium crispy patty burger layered with fresh veggies and smoky sauce is served to {member.mention}! 🥓",
+            "gif": "https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTM3ZTZ2MzdvN3R0ZzJwNXcyYmIydmRocDN6YTRhYWd2YTh6YWpybiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Y6y967469B560/giphy.gif"
+        },
+        "cold_drink": {
+            "title": "Chilled Icy Soft Drink! 🥤",
+            "desc": f"An ice-cold refreshing beverage fizzy with bubbles has been perfectly served to {member.mention}! 🧊",
+            "gif": "https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExbXN6MTh5bXN0YnZ6d3g0M3Z6N3A5bndqd3NmdXNxeWd0N3A1ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/9w9Z2YwHsMv8S2uQ8e/giphy.gif"
+        },
+        "indian_spicy": {
+            "title": "Royal Indian Spicy Platter! 🍛",
+            "desc": f"A rich, steaming hot aromatic Indian spicy curry served with premium aesthetic vibes directly to {member.mention}! 🔥🌶️",
+            "gif": "https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTM3ZTZ2MzdvN3R0ZzJwNXcyYmIydmRocDN6YTRhYWd2YTh6YWpybiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26ybvVb95tGhht7zt6/giphy.gif"
+        },
+        "donuts": {
+            "title": "Glazed Premium Sweet Donuts! 🍩",
+            "desc": f"A box of colorful premium glazed donuts with sweet chocolate flakes has been served to {member.mention}! 🌸",
+            "gif": "https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExbXN6OWVwNmIydmRocDN6YTRhYWd2YTh6YWpybnZtdWpkeWRzbXFkeSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7bu3XilJ5BOiSGic/giphy.gif"
+        }
+    }
 
-@bot.tree.command(name="hug", description="🫂 Give a warm, cozy anime hug to someone")
-async def hug(interaction: discord.Interaction, member: discord.Member):
-    embed = discord.Embed(title="Stardust Hug! (⁠≧⁠▽⁠≦⁠)", description=f"**Wholesome cozy vibes are traveling across channels!** 💖", color=discord.Color.from_rgb(255, 182, 193))
-    embed.set_image(url="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDJ0Y2c1amwzdWlhM3gxeGNidmxtMWd5dWQzYjU5dGtwcnF0OTY0bCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lrr9rHuoJOE0w/giphy.gif")
-    embed.set_footer(text="Shared with love! (⁠•⁠‿⁠•⁠)")
-    await interaction.response.send_message(content=f"🫂 {interaction.user.mention} wraps their arms tightly around {member.mention}!", embed=embed)
-
+    selected = menu_data.get(item)
+    
+    # Elegant Aesthetic Container Layout
+    embed = discord.Embed(
+        title=selected["title"],
+        description=selected["desc"],
+        color=discord.Color.from_rgb(245, 238, 227)  # Beige Accent Matching Card
+    )
+    embed.set_image(url=selected["gif"])
+    embed.set_footer(text=f"Stardust Cafe Management • Order requested by {interaction.user.name}")
+    
+    content_text = f"🍽️ {interaction.user.mention} serves a delicious item to {member.mention}!"
+    await interaction.followup.send(content=content_text, embed=embed)
+    
 # =========================================================
 # 🛡️ MODULE 3: MODERATION SUITE (FIXED BAN TYPO)
 # =========================================================
