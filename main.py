@@ -1985,9 +1985,9 @@ async def on_reaction_add(reaction: discord.Reaction, user: discord.User):
         await star_channel.send(content=f"⭐ **{reaction.count}** | {reaction.message.channel.mention}", embed=embed)
 
 
-# ------------------------------------------------------------------------------
-# 🎨 SECTION 3: INTERACTIVE CUSTOM EMBED BUILDER MODAL PANEL
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# 🎨 FINAL BULLETPROOF CUSTOM EMBED BUILDER SYSTEM
+# ==============================================================================
 
 class EmbedBuilderModal(discord.ui.Modal, title="🎨 Custom Embed Designer Panel"):
     embed_title = discord.ui.TextInput(label="Embed Title", placeholder="Enter catchy title...", max_length=256)
@@ -2012,7 +2012,7 @@ class EmbedBuilderModal(discord.ui.Modal, title="🎨 Custom Embed Designer Pane
                 try:
                     rgb_color = discord.Color.from_str(hex_val)
                 except Exception:
-                    rgb_color = discord.Color.blurple()  # Fallback color if hex is wrong
+                    rgb_color = discord.Color.blurple()
             else:
                 rgb_color = discord.Color.blurple()
 
@@ -2040,8 +2040,16 @@ class EmbedBuilderModal(discord.ui.Modal, title="🎨 Custom Embed Designer Pane
         except discord.Forbidden:
             await interaction.edit_original_response(content="❌ **Permission Error:** Bot doesn't have permissions to send embeds or talk in that specific target channel.")
         except Exception as e:
-            # Agar koi bhi anjan error aata hai, toh bot processing par atka nahi rahega, seedhe screen par error dikha dega!
             await interaction.edit_original_response(content=f"❌ **Backend Processing Error:** `{str(e)}`\nPlease verify data syntax parameters.")
+
+
+# 📢 IS COMMAND KI WAJAH SE LOG GAYAB HUA THA - AB YEH FIR SE ADDED HAI
+@bot.tree.command(name="embed_builder", description="⚙️ Admin Only: Open the interactive pop-up custom embed builder UI sheet.")
+@discord.app_commands.describe(channel="Target channel to dispatch the announcement card")
+@discord.app_commands.checks.has_permissions(manage_messages=True)
+async def embed_builder(interaction: discord.Interaction, channel: discord.TextChannel):
+    # Admin ke liye modal open karega
+    await interaction.response.send_modal(EmbedBuilderModal(target_channel=channel))
     
 # Deploy System Launch Configuration
 keep_alive()
