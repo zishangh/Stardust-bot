@@ -439,45 +439,84 @@ async def on_message(message: discord.Message):
 # ☕ MODULE 2: FUN INTERACTIONS (PREMIUM GIF SERVING ENGINE)
 # ====================================================================
 
-@bot.tree.command(name="serve", description="🍽️ Serve delicious premium food items with high-quality dynamic GIFs")
+@bot.tree.command(name="serve", description="🍽️ Serve a premium aesthetic food item from the Stardust Cafe")
 @discord.app_commands.describe(
-    item="Choose what you want to serve",
-    member="The lucky customer to receive the order"
+    item="Choose the premium item to serve",
+    member="The customer who will receive this delicious treat"
 )
 @discord.app_commands.choices(item=[
-    discord.app_commands.Choice(name="☕ Coffee", value="coffee"),
-    discord.app_commands.Choice(name="🍕 Pizza", value="pizza"),
-    discord.app_commands.Choice(name="🍔 Burger", value="burger"),
-    discord.app_commands.Choice(name="🥤 Cold Drink", value="cold_drink"),
-    discord.app_commands.Choice(name="🍛 Indian Spicy Curry", value="indian_spicy"),
-    discord.app_commands.Choice(name="🍩 Donuts", value="donuts")
+    discord.app_commands.Choice(name="☕ Barista Coffee", value="coffee"),
+    discord.app_commands.Choice(name="🍕 Woodfired Pizza", value="pizza"),
+    discord.app_commands.Choice(name="🍔 Gourmet Burger", value="burger"),
+    discord.app_commands.Choice(name="🥤 Chilled Drink", value="cold_drink"),
+    discord.app_commands.Choice(name="🍛 Royal Indian Curry", value="indian_spicy"),
+    discord.app_commands.Choice(name="🍩 Glazed Donuts", value="donuts")
 ])
 async def serve(interaction: discord.Interaction, item: str, member: discord.Member):
     await interaction.response.defer()
     
-    # Direct Tenor Raw Media Links (Super Compatible)
-    menu_gifs = {
-        "coffee": "https://media.tenor.com/4yNf9_N9X08AAAAC/anime-coffee.gif",
-        "pizza": "https://media.tenor.com/Z49b8P81w7IAAAAC/anime-pizza.gif",
-        "burger": "https://media.tenor.com/6a_UshvVw7YAAAAC/anime-burger.gif",
-        "cold_drink": "https://media.tenor.com/E8b89Yv27m8AAAAC/anime-drink.gif",
-        "indian_spicy": "https://media.tenor.com/vH_f9u4F97EAAAAC/anime-curry.gif",
-        "donuts": "https://media.tenor.com/p1_wLgS-M34AAAAC/anime-donut.gif"
+    menu_data = {
+        "coffee": {
+            "title": "☕ ─── STARDUST PREMIUM BARISTA ─── ☕",
+            "desc": f"**Premium Order Fulfilled!** ✨\n\n"
+                    f"**Customer:** {member.mention}\n"
+                    f"**Item Served:** `Freshly Brewed Barista Coffee` ☕\n\n"
+                    f"*A warm, aromatic blend crafted with golden coffee beans and premium cream froth. Served hot just for you!* 🌸\n\n"
+                    f"─── *Have a cozy and beautiful day!* ───"
+        },
+        "pizza": {
+            "title": "🍕 ─── WOODFIRED ITALIAN DELIGHT ─── 🍕",
+            "desc": f"**Premium Order Fulfilled!** ✨\n\n"
+                    f"**Customer:** {member.mention}\n"
+                    f"**Item Served:** `Authentic Woodfired Pizza` 🍕\n\n"
+                    f"*A piping hot crust loaded with premium stretching mozzarella, fresh basil, and signature rich marinara sauce!* 🧀\n\n"
+                    f"─── *Enjoy your cheesy slice of heaven!* ───"
+        },
+        "burger": {
+            "title": "🍔 ─── CLASSIC GOURMET STACK ─── 🍔",
+            "desc": f"**Premium Order Fulfilled!** ✨\n\n"
+                    f"**Customer:** {member.mention}\n"
+                    f"**Item Served:** `Gourmet Crispy Stack Burger` 🍔\n\n"
+                    f"*A giant, juicy premium patty layered with melting cheddar, crunchy lettuce, and a secret smoky chef's sauce!* 🥓\n\n"
+                    f"─── *Take a massive, delicious bite!* ───"
+        },
+        "cold_drink": {
+            "title": "🥤 ─── ICY REFRESHING BLISS ─── 🥤",
+            "desc": f"**Premium Order Fulfilled!** ✨\n\n"
+                    f"**Customer:** {member.mention}\n"
+                    f"**Item Served:** `Chilled Bubble Icy Soda` 🥤\n\n"
+                    f"*An absolute freeze experience! A crystal-clear sparkling beverage bubbling with icy freshness to cool your soul.* 🧊\n\n"
+                    f"─── *Take a deep, refreshing sip!* ───"
+        },
+        "indian_spicy": {
+            "title": "🍛 ─── ROYAL INDIAN SPICE PLATTER ─── 🍛",
+            "desc": f"**Premium Order Fulfilled!** ✨\n\n"
+                    f"**Customer:** {member.mention}\n"
+                    f"**Item Served:** `Aromatic Royal Curry Platter` 🍛\n\n"
+                    f"*A rich, steaming hot authentic curry cooked with secret traditional spices, fresh cream, and pure love.* 🔥🌶️\n\n"
+                    f"─── *Experience the true burst of flavors!* ───"
+        },
+        "donuts": {
+            "title": "🍩 ─── GLAZED SWEET CONFECTION ─── 🍩",
+            "desc": f"**Premium Order Fulfilled!** ✨\n\n"
+                    f"**Customer:** {member.mention}\n"
+                    f"**Item Served:** `Premium Glazed Chocolate Donuts` 🍩\n\n"
+                    f"*A heavenly box of soft, airy donuts dipped in premium milk chocolate and topped with colorful pastel flakes.* 🌸\n\n"
+                    f"─── *Sweet treats for a wonderful soul!* ───"
+        }
     }
 
-    item_names = {
-        "coffee": "☕ hot premium coffee",
-        "pizza": "🍕 woodfired cheesy pizza",
-        "burger": "🍔 gourmet stack burger",
-        "cold_drink": "🥤 chilled icy soft drink",
-        "indian_spicy": "🍛 royal Indian spicy platter",
-        "donuts": "🍩 glazed sweet donut"
-    }
+    selected = menu_data.get(item)
     
-    # Is baar hum koi embed object use nahi kar rahe hain. No blank boxes!
-    content_text = f"🍽️ {interaction.user.mention} serves a delicious **{item_names[item]}** to {member.mention}!\n{menu_gifs[item]}"
+    # Elegant design without any attachment or url links
+    embed = discord.Embed(
+        title=selected["title"],
+        description=selected["desc"],
+        color=discord.Color.from_rgb(245, 238, 227)  # Classic Warm Beige Aesthetic Color
+    )
+    embed.set_footer(text=f"✨ Stardust Butler System • Order requested by {interaction.user.name}")
     
-    await interaction.followup.send(content=content_text)
+    await interaction.followup.send(embed=embed)
     
 # =========================================================
 # 🛡️ MODULE 3: MODERATION SUITE (FIXED BAN TYPO)
