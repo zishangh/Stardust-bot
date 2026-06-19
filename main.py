@@ -2000,46 +2000,48 @@ class EmbedBuilderModal(discord.ui.Modal, title="🎨 Custom Embed Designer Pane
         self.target_channel = target_channel
 
     async def on_submit(self, interaction: discord.Interaction):
-        # ⚡ CRITICAL FIX: Discord ko instantly response dekar modal close karenge taaki error na aaye
+        # ⚡ Step 1: Instantly respond to stop the Discord timeout glitch
         await interaction.response.send_message("⏳ Processing and dispatching your announcement...", ephemeral=True)
 
-        # Color parsing logic
-        hex_val = self.embed_color.value.strip() if self.embed_color.value else "#7289DA"
-        if not hex_val.startswith("#"): 
-            hex_val = f"#{hex_val}"
-        
         try:
-            rgb_color = discord.Color.from_str(hex_val)
-        except ValueError:
-            rgb_color = discord.Color.blurple()
+            # Step 2: Handle HEX color code carefully
+            hex_val = self.embed_color.value.strip() if self.embed_color.value else ""
+            if hex_val:
+                if not hex_val.startswith("#"): 
+                    hex_val = f"#{hex_val}"
+                try:
+                    rgb_color = discord.Color.from_str(hex_val)
+                except Exception:
+                    rgb_color = discord.Color.blurple()  # Fallback color if hex is wrong
+            else:
+                rgb_color = discord.Color.blurple()
 
-        embed = discord.Embed(
-            title=self.embed_title.value,
-            description=self.embed_desc.value,
-            color=rgb_color
-        )
-        embed.set_footer(text=f"Broadcasted by {interaction.user.display_name}")
-        embed.set_timestamp()
-        
-        if self.embed_img.value:
-            if self.embed_img.value.startswith("http://") or self.embed_img.value.startswith("https://"):
-                embed.set_image(url=self.embed_img.value)
+            # Step 3: Build the beautiful embed configuration structure
+            embed = discord.Embed(
+                title=self.embed_title.value,
+                description=self.embed_desc.value,
+                color=rgb_color
+            )
+            embed.set_footer(text=f"Broadcasted by {interaction.user.display_name}")
+            embed.set_timestamp()
+            
+            # Step 4: Validate and attach image if present
+            img_url = self.embed_img.value.strip() if self.embed_img.value else ""
+            if img_url:
+                if img_url.startswith("http://") or img_url.startswith("https://"):
+                    embed.set_image(url=img_url)
 
-        try:
+            # Step 5: Critical Send execution sequence
             await self.target_channel.send(embed=embed)
-            # Response message ko edit karke success confirm karenge
+            
+            # Step 6: Final success update confirmation
             await interaction.edit_original_response(content=f"🚀 **Success!** Announcement embed dispatched cleanly to {self.target_channel.mention}.")
-        except discord.Forbidden:
-            await interaction.edit_original_response(content="❌ **Error:** Bot doesn't have permissions to speak or send embeds in that channel.")
-        except Exception as e:
-            print(f"Modal Error: {e}")
 
-@bot.tree.command(name="embed_builder", description="⚙️ Admin Only: Open the interactive pop-up custom embed builder UI sheet.")
-@discord.app_commands.describe(channel="Target channel to dispatch the announcement card")
-@discord.app_commands.checks.has_permissions(manage_messages=True)
-async def embed_builder(interaction: discord.Interaction, channel: discord.TextChannel):
-    # Admin ke liye popup open karega
-    await interaction.response.send_modal(EmbedBuilderModal(target_channel=channel))
+        except discord.Forbidden:
+            await interaction.edit_original_response(content="❌ **Permission Error:** Bot doesn't have permissions to send embeds or talk in that specific target channel.")
+        except Exception as e:
+            # Agar koi bhi anjan error aata hai, toh bot processing par atka nahi rahega, seedhe screen par error dikha dega!
+            await interaction.edit_original_response(content=f"❌ **Backend Processing Error:** `{str(e)}`\nPlease verify data syntax parameters.")
     
 # Deploy System Launch Configuration
 keep_alive()
