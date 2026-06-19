@@ -63,6 +63,9 @@ async def on_ready():
     try:
         synced = await bot.tree.sync()
         print(f"Synced {len(synced)} commands.")
+        # Persistent ticket launcher view register matrix
+        bot.add_view(TicketLauncherView())
+        print("Ticket persistent views registered successfully.")
     except Exception as e:
         print(f"Sync Error: {e}")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="your commands"))
@@ -2104,6 +2107,181 @@ async def on_app_command_error(interaction: discord.Interaction, error: discord.
                 await interaction.edit_original_response(content=None, embed=embed)
         except Exception:
             pass  # Fail-safe suppression matrix to protect execution stability
+# ==============================================================================
+# 🎫 FULLY DYNAMIC INTERACTIVE TICKET SYSTEM WITH ADMIN CUSTOMIZATION
+# ==============================================================================
+
+TICKET_DATA_FILE = "ticket_config.json"
+
+def load_ticket_config():
+    try:
+        import os, json
+        if os.path.exists(TICKET_DATA_FILE):
+            with open(TICKET_DATA_FILE, "r") as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error loading ticket config: {e}")
+    return {}
+
+def save_ticket_config(data):
+    try:
+        import json
+        with open(TICKET_DATA_FILE, "w") as f:
+            json.dump(data, f, indent=4)
+    except Exception as e:
+        print(f"Error saving ticket config: {e}")
+
+
+class TicketControlsView(discord.ui.View):
+    def __init__(self, owner_id: int):
+        super().__init__(timeout=None)
+        self.owner_id = owner_id
+
+    @discord.ui.button(label="🔒 Close Ticket", style=discord.ButtonStyle.danger, custom_id="ticket_close")
+    async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not interaction.user.guild_permissions.manage_channels and interaction.user.id != self.owner_id:
+            await interaction.response.send_message("❌ Only server staff or the ticket owner can close this ticket.", ephemeral=True)
+            return
+
+        await interaction.response.send_message("🔒 **This ticket is being closed...** Removing channel in 5 seconds.")
+        import asyncio
+        await asyncio.sleep(5)
+        try:
+            await interaction.channel.delete(reason="Ticket closed.")
+        except discord.Forbidden:
+            pass
+
+    @discord.ui.button(label="📜 Claim Ticket", style=discord.ButtonStyle.success, custom_id="ticket_claim")
+    async def claim_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not interaction.user.guild_permissions.manage_messages:
+            await interaction.response.send_message("❌ Only server staff members can claim tickets!", ephemeral=True)
+            return
+
+        button.disabled = True
+        button.label = f"📜 Claimed by {interaction.user.display_name}"
+        button.style = discord.ButtonStyle.secondary
+        
+        await interaction.response.edit_message(view=self)
+        await interaction.channel.send(f"🙋‍♂️ **Support Update:** This ticket has been claimed by {interaction.user.mention}.")
+
+
+class TicketLauncherView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="📩 Create Ticket", style=discord.ButtonStyle.primary, custom_id="ticket_launcher_btn")
+    async def launch_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        guild = interaction.guild
+        member = interaction.user
+
+        configs = load_ticket_config()
+        guild_id = str(guild.id)
+        config = configs.get(guild_id, {})
+
+        welcome_title = config.get("welcome_title", "🎫 Support Ticket Opened")
+        welcome_msg = config.get("welcome_msg", "Welcome! Please describe your query or issue in detail here.")
+        staff_role_id = config.get("staff_role_id", None)
+
+        existing_channel = discord.utils.get(guild.text_channels, name=f"🎫-ticket-{member.name.lower()}")
+        if existing_channel:
+            await interaction.response.send_message(f"⚠️ You already have an active ticket open here: {existing_channel.mention}", ephemeral=True)
+            return
+
+        await interaction.response.send_message("🎫 Creating your secure support channel...", ephemeral=True)
+
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            member: discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True, embed_links=True),
+            guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True)
+        }
+
+        ping_mention = "Staff"
+        if staff_role_id:
+            staff_role = guild.get_role(int(staff_role_id))
+            if staff_role:
+                overwrites[staff_role] = discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True, embed_links=True)
+                ping_mention = staff_role.mention
+
+        try:
+            ticket_channel = await guild.create_text_channel(
+                name=f"🎫-ticket-{member.name}",
+                overwrites=overwrites,
+                category=interaction.channel.category
+            )
+
+            greet_embed = discord.Embed(
+                title=welcome_title,
+                description=f"Hey {member.mention},\n\n{welcome_msg}",
+                color=discord.Color.blue(),
+                timestamp=discord.utils.utcnow()
+            )
+            greet_embed.set_footer(text=f"Requested by {member.display_name}")
+
+            await ticket_channel.send(content=f"{member.mention} | {ping_mention}", embed=greet_embed, view=TicketControlsView(owner_id=member.id))
+            await interaction.edit_original_response(content=f"🚀 **Success!** Ticket generated: {ticket_channel.mention}")
+
+        except Exception as e:
+            await interaction.edit_original_response(content=f"❌ **System Error:** `{str(e)}`")
+
+
+# ⚙️ COMMAND 1: THE CONFIGURATOR (Settings Set Karne Ke Liye)
+@bot.tree.command(name="ticket_config", description="⚙️ Owner/Admin Only: Customize welcome message, description text, and staff roles.")
+@discord.app_commands.describe(
+    panel_description="The text shown on the main entry panel button card",
+    welcome_title="The title inside the newly opened private ticket channel embed",
+    welcome_message="The actual instructions/text user sees inside their private ticket",
+    staff_role="The specific staff/mod role that should be pinged and allowed inside the ticket"
+)
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def ticket_config(
+    interaction: discord.Interaction, 
+    panel_description: str = None,
+    welcome_title: str = None, 
+    welcome_message: str = None, 
+    staff_role: discord.Role = None
+):
+    guild_id = str(interaction.guild.id)
+    configs = load_ticket_config()
+    
+    if guild_id not in configs:
+        configs[guild_id] = {}
+
+    if panel_description: configs[guild_id]["panel_desc"] = panel_description
+    if welcome_title: configs[guild_id]["welcome_title"] = welcome_title
+    if welcome_message: configs[guild_id]["welcome_msg"] = welcome_message
+    if staff_role: configs[guild_id]["staff_role_id"] = str(staff_role.id)
+
+    save_ticket_config(configs)
+    
+    embed = discord.Embed(title="✅ Ticket Settings Updated", color=discord.Color.green())
+    embed.description = "Your custom configurations have been successfully saved into the local JSON registry configuration system nodes."
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+# 📢 COMMAND 2: THE LAUNCHER SETUP (Panel Display Karne Ke Liye)
+@bot.tree.command(name="ticket_setup", description="⚙️ Admin Only: Display the interactive ticket launcher panel button card.")
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def ticket_setup(interaction: discord.Interaction, channel: discord.TextChannel):
+    await interaction.response.send_message(f"⏳ Deploying panel layout to {channel.mention}...", ephemeral=True)
+
+    guild_id = str(interaction.guild.id)
+    configs = load_ticket_config()
+    config = configs.get(guild_id, {})
+    
+    panel_desc = config.get("panel_desc", "Need assistance, want to report a user, or have a question for the administration?\n\nClick the **Create Ticket** button below to initialize a secure, fully private conversation channel.")
+
+    panel_embed = discord.Embed(
+        title="📩 Help & Server Support Portal",
+        description=panel_desc,
+        color=discord.Color.green()
+    )
+    panel_embed.set_footer(text="Automated Helpdesk Infrastructure")
+    
+    try:
+        await channel.send(embed=panel_embed, view=TicketLauncherView())
+        await interaction.edit_original_response(content=f"✅ **Deployment Complete!** Panel is active in {channel.mention}.")
+    except discord.Forbidden:
+        await interaction.edit_original_response(content="❌ **Permission Deficit:** Bot cannot write messages in that target location.")
 
 # Deploy System Launch Configuration
 keep_alive()
