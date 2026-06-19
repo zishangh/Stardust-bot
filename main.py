@@ -1278,7 +1278,7 @@ async def warn(interaction: discord.Interaction, member: discord.Member, reason:
                     f"**Moderator:** {interaction.user.mention}",
         color=discord.Color.from_rgb(255, 140, 0)
     )
-    server_embed.set_timestamp()
+    server_embed.timestamp = discord.utils.utcnow()
     await interaction.followup.send(embed=server_embed)
     
     # Attempt to DM the user to notify them privately
