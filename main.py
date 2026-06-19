@@ -2000,9 +2000,14 @@ class EmbedBuilderModal(discord.ui.Modal, title="🎨 Custom Embed Designer Pane
         self.target_channel = target_channel
 
     async def on_submit(self, interaction: discord.Interaction):
+        # ⚡ CRITICAL FIX: Discord ko instantly response dekar modal close karenge taaki error na aaye
+        await interaction.response.send_message("⏳ Processing and dispatching your announcement...", ephemeral=True)
+
         # Color parsing logic
         hex_val = self.embed_color.value.strip() if self.embed_color.value else "#7289DA"
-        if not hex_val.startswith("#"): hex_val = f"#{hex_val}"
+        if not hex_val.startswith("#"): 
+            hex_val = f"#{hex_val}"
+        
         try:
             rgb_color = discord.Color.from_str(hex_val)
         except ValueError:
@@ -2022,17 +2027,20 @@ class EmbedBuilderModal(discord.ui.Modal, title="🎨 Custom Embed Designer Pane
 
         try:
             await self.target_channel.send(embed=embed)
-            await interaction.response.send_message(f"🚀 **Success!** Announcement embed dispatched cleanly to {self.target_channel.mention}.", ephemeral=True)
+            # Response message ko edit karke success confirm karenge
+            await interaction.edit_original_response(content=f"🚀 **Success!** Announcement embed dispatched cleanly to {self.target_channel.mention}.")
         except discord.Forbidden:
-            await interaction.response.send_message("❌ **Error:** Bot doesn't have permissions to speak in that channel.", ephemeral=True)
+            await interaction.edit_original_response(content="❌ **Error:** Bot doesn't have permissions to speak or send embeds in that channel.")
+        except Exception as e:
+            print(f"Modal Error: {e}")
 
 @bot.tree.command(name="embed_builder", description="⚙️ Admin Only: Open the interactive pop-up custom embed builder UI sheet.")
 @discord.app_commands.describe(channel="Target channel to dispatch the announcement card")
 @discord.app_commands.checks.has_permissions(manage_messages=True)
 async def embed_builder(interaction: discord.Interaction, channel: discord.TextChannel):
-    # Sends a Modal Popup to the Admin instantly
+    # Admin ke liye popup open karega
     await interaction.response.send_modal(EmbedBuilderModal(target_channel=channel))
-
+    
 # Deploy System Launch Configuration
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
