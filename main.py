@@ -455,7 +455,6 @@ async def on_message(message: discord.Message):
 async def serve(interaction: discord.Interaction, item: str, member: discord.Member):
     await interaction.response.defer()
     
-    # 🔥 Highly Compatible Asset CDN (Tenor & Verified Formats)
     menu_data = {
         "coffee": {
             "title": "Stardust Premium Coffee Order! ☕",
@@ -496,10 +495,9 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
         description=selected["desc"],
         color=discord.Color.from_rgb(245, 238, 227)
     )
-    embed.set_image(url=selected["gif"])
     embed.set_footer(text=f"Stardust Cafe Management • Order requested by {interaction.user.name}")
     
-    content_text = f"🍽️ {interaction.user.mention} serves a delicious item to {member.mention}!"
+    content_text = f"🍽️ {interaction.user.mention} serves a delicious item to {member.mention}!\n{selected['gif']}"
     await interaction.followup.send(content=content_text, embed=embed)
     
 # =========================================================
