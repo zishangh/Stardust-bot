@@ -1852,6 +1852,186 @@ async def remove_auto_reminder(interaction: discord.Interaction):
         await interaction.response.send_message("🗑️ **Interval Shutdown Completed!** Active auto-reminder worker tasks have been successfully destroyed.")
     else:
         await interaction.response.send_message("❌ **No running loop reminder task patterns found** on this guild.", ephemeral=True)
+# ==============================================================================
+# 📊 MODULE 11.0: LOGGING, STARBOARD & INTERACTIVE EMBED BUILDER
+# ==============================================================================
+
+# Global configuration maps (Aap ise database me bhi map kar sakte hain)
+LOG_CHANNELS = {}   # Format: {"guild_id": channel_id}
+STARBOARD_CONFIG = {} # Format: {"guild_id": {"channel_id": 123, "required_stars": 5}}
+
+# ------------------------------------------------------------------------------
+# 📜 SECTION 1: ADVANCED FULL-TRACK MESSAGE & VOICE LOGGING
+# ------------------------------------------------------------------------------
+
+@bot.tree.command(name="set_logging", description="⚙️ Admin Only: Set the private staff channel for full server logs.")
+@discord.app_commands.describe(channel="The channel where logs will be posted")
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def set_logging(interaction: discord.Interaction, channel: discord.TextChannel):
+    g_id = str(interaction.guild_id)
+    LOG_CHANNELS[g_id] = channel.id
+    await interaction.response.send_message(f"✅ **Logging Active!** All server events will now be logged in {channel.mention}.")
+
+# A. Message Delete Log Listener
+@bot.event
+async def on_message_delete(message: discord.Message):
+    if message.author.bot or not message.guild: return
+    g_id = str(message.guild.id)
+    if g_id not in LOG_CHANNELS: return
+    
+    log_channel = bot.get_channel(LOG_CHANNELS[g_id])
+    if log_channel:
+        embed = discord.Embed(
+            title="🗑️ Message Deleted",
+            description=f"**Author:** {message.author.mention} (`{message.author.id}`)\n"
+                        f"**Channel:** {message.channel.mention}\n\n"
+                        f"📝 **Content:** {message.content or '*[No text/Attachment or Embed]*'}",
+            color=discord.Color.red()
+        )
+        embed.set_timestamp()
+        await log_channel.send(embed=embed)
+
+# B. Message Edit Log Listener
+@bot.event
+async def on_message_edit(before: discord.Message, after: discord.Message):
+    if before.author.bot or not before.guild or before.content == after.content: return
+    g_id = str(before.guild.id)
+    if g_id not in LOG_CHANNELS: return
+    
+    log_channel = bot.get_channel(LOG_CHANNELS[g_id])
+    if log_channel:
+        embed = discord.Embed(
+            title="✏️ Message Edited",
+            description=f"**Author:** {before.author.mention}\n"
+                        f"**Channel:** {before.channel.mention}\n"
+                        f"🔗 [Jump to Message]({after.jump_url})",
+            color=discord.Color.orange()
+        )
+        embed.add_field(name="Before:", value=before.content or "*Empty*", inline=False)
+        embed.add_field(name="After:", value=after.content or "*Empty*", inline=False)
+        embed.set_timestamp()
+        await log_channel.send(embed=embed)
+
+# C. Voice State Log Listener (Join/Leave/Mute)
+@bot.event
+async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+    g_id = str(member.guild.id)
+    if g_id not in LOG_CHANNELS: return
+    log_channel = bot.get_channel(LOG_CHANNELS[g_id])
+    if not log_channel: return
+    
+    embed = discord.Embed(color=discord.Color.blue()).set_author(name=member.display_name, icon_url=member.display_avatar.url)
+    embed.set_timestamp()
+    
+    # Condition 1: Joined Voice
+    if not before.channel and after.channel:
+        embed.title = "🔊 Voice Channel Joined"
+        embed.description = f"{member.mention} connected to **{after.channel.name}**."
+        await log_channel.send(embed=embed)
+        
+    # Condition 2: Left Voice
+    elif before.channel and not after.channel:
+        embed.title = "🔇 Voice Channel Left"
+        embed.description = f"{member.mention} disconnected from **{before.channel.name}**."
+        await log_channel.send(embed=embed)
+        
+    # Condition 3: Switched Rooms
+    elif before.channel and after.channel and before.channel.id != after.channel.id:
+        embed.title = "🔀 Voice Channel Switched"
+        embed.description = f"{member.mention} moved from **{before.channel.name}** to **{after.channel.name}**."
+        await log_channel.send(embed=embed)
+
+
+# ------------------------------------------------------------------------------
+# ⭐ SECTION 2: ORGANIC STARBOARD ENGAGEMENT SYSTEM
+# ------------------------------------------------------------------------------
+
+@bot.tree.command(name="setup_starboard", description="⚙️ Admin Only: Configure the starboard showcase channel.")
+@discord.app_commands.describe(channel="Where starred highlights are posted", stars="Minimum star count (default 5)")
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def setup_starboard(interaction: discord.Interaction, channel: discord.TextChannel, stars: int = 5):
+    g_id = str(interaction.guild_id)
+    STARBOARD_CONFIG[g_id] = {"channel_id": channel.id, "required_stars": stars}
+    await interaction.response.send_message(f"⭐ **Starboard Enabled!** Best messages with `{stars}⭐` will go to {channel.mention}.")
+
+@bot.event
+async def on_reaction_add(reaction: discord.Reaction, user: discord.User):
+    if reaction.emoji != "⭐" or not reaction.message.guild: return
+    g_id = str(reaction.message.guild.id)
+    if g_id not in STARBOARD_CONFIG: return
+    
+    config = STARBOARD_CONFIG[g_id]
+    if reaction.count >= config["required_stars"]:
+        star_channel = bot.get_channel(config["channel_id"])
+        if not star_channel: return
+        
+        # Prevent double posting (Simple cache strategy using message history check)
+        async for msg in star_channel.history(limit=20):
+            if msg.embeds and str(reaction.message.id) in msg.embeds[0].footer.text:
+                return # Pehle se board par hai, do baar send nahi karega
+
+        embed = discord.Embed(
+            description=reaction.message.content or "*[Attachment/Embed]*",
+            color=discord.Color.gold()
+        )
+        embed.set_author(name=reaction.message.author.display_name, icon_url=reaction.message.author.display_avatar.url)
+        embed.add_field(name="Original", value=f"🔗 [Jump to post]({reaction.message.jump_url})", inline=False)
+        embed.set_footer(text=f"ID: {reaction.message.id} • ⭐ {reaction.count}")
+        embed.set_timestamp()
+        
+        if reaction.message.attachments:
+            embed.set_image(url=reaction.message.attachments[0].url)
+            
+        await star_channel.send(content=f"⭐ **{reaction.count}** | {reaction.message.channel.mention}", embed=embed)
+
+
+# ------------------------------------------------------------------------------
+# 🎨 SECTION 3: INTERACTIVE CUSTOM EMBED BUILDER MODAL PANEL
+# ------------------------------------------------------------------------------
+
+class EmbedBuilderModal(discord.ui.Modal, title="🎨 Custom Embed Designer Panel"):
+    embed_title = discord.ui.TextInput(label="Embed Title", placeholder="Enter catchy title...", max_length=256)
+    embed_desc = discord.ui.TextInput(label="Description Content", style=discord.TextStyle.paragraph, placeholder="Type announcement details here...", max_length=2000)
+    embed_color = discord.ui.TextInput(label="HEX Color Code (Optional)", placeholder="e.g., #FF4500 or leave empty for default", required=False, max_length=7)
+    embed_img = discord.ui.TextInput(label="Image URL Link (Optional)", placeholder="https://example.com/banner.png", required=False)
+
+    def __init__(self, target_channel: discord.TextChannel):
+        super().__init__()
+        self.target_channel = target_channel
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # Color parsing logic
+        hex_val = self.embed_color.value.strip() if self.embed_color.value else "#7289DA"
+        if not hex_val.startswith("#"): hex_val = f"#{hex_val}"
+        try:
+            rgb_color = discord.Color.from_str(hex_val)
+        except ValueError:
+            rgb_color = discord.Color.blurple()
+
+        embed = discord.Embed(
+            title=self.embed_title.value,
+            description=self.embed_desc.value,
+            color=rgb_color
+        )
+        embed.set_footer(text=f"Broadcasted by {interaction.user.display_name}")
+        embed.set_timestamp()
+        
+        if self.embed_img.value:
+            if self.embed_img.value.startswith("http://") or self.embed_img.value.startswith("https://"):
+                embed.set_image(url=self.embed_img.value)
+
+        try:
+            await self.target_channel.send(embed=embed)
+            await interaction.response.send_message(f"🚀 **Success!** Announcement embed dispatched cleanly to {self.target_channel.mention}.", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.response.send_message("❌ **Error:** Bot doesn't have permissions to speak in that channel.", ephemeral=True)
+
+@bot.tree.command(name="embed_builder", description="⚙️ Admin Only: Open the interactive pop-up custom embed builder UI sheet.")
+@discord.app_commands.describe(channel="Target channel to dispatch the announcement card")
+@discord.app_commands.checks.has_permissions(manage_messages=True)
+async def embed_builder(interaction: discord.Interaction, channel: discord.TextChannel):
+    # Sends a Modal Popup to the Admin instantly
+    await interaction.response.send_modal(EmbedBuilderModal(target_channel=channel))
 
 # Deploy System Launch Configuration
 keep_alive()
