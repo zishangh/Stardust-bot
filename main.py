@@ -436,7 +436,7 @@ async def on_message(message: discord.Message):
     await bot.process_commands(message)
     
 # ====================================================================
-# ☕ MODULE 2: FUN INTERACTIONS (GIF EMPOWERED ENGINE)
+# ☕ MODULE 2: FUN INTERACTIONS (PREMIUM GIF SERVING ENGINE)
 # ====================================================================
 
 @bot.tree.command(name="serve", description="🍽️ Serve delicious premium food items with high-quality dynamic GIFs")
@@ -455,37 +455,37 @@ async def on_message(message: discord.Message):
 async def serve(interaction: discord.Interaction, item: str, member: discord.Member):
     await interaction.response.defer()
     
-    # 🌟 Raw Working Direct Image URL CDN Database
+    # 🔥 Highly Compatible Asset CDN (Tenor & Verified Formats)
     menu_data = {
         "coffee": {
             "title": "Stardust Premium Coffee Order! ☕",
             "desc": f"A warm, freshly brewed premium barista coffee has been served to {member.mention}! ✨",
-            "gif": "https://media.giphy.com/media/TlK63Er4gKHILXqv0Jg/giphy.gif"
+            "gif": "https://media.tenor.com/4yNf9_N9X08AAAAC/anime-coffee.gif"
         },
         "pizza": {
             "title": "Woodfired Cheesy Pizza Delivery! 🍕",
             "desc": f"An authentic Italian hot woodfired pizza loaded with melting cheese has been served to {member.mention}! 🧀",
-            "gif": "https://media.giphy.com/media/1395cV7aU6dP9K/giphy.gif"
+            "gif": "https://media.tenor.com/Z49b8P81w7IAAAAC/anime-pizza.gif"
         },
         "burger": {
             "title": "Classic Gourmet Stack Burger! 🍔",
             "desc": f"A giant premium crispy patty burger layered with fresh veggies and smoky sauce is served to {member.mention}! 🥓",
-            "gif": "https://media.giphy.com/media/Y6y967469B560/giphy.gif"
+            "gif": "https://media.tenor.com/6a_UshvVw7YAAAAC/anime-burger.gif"
         },
         "cold_drink": {
             "title": "Chilled Icy Soft Drink! 🥤",
             "desc": f"An ice-cold refreshing beverage fizzy with bubbles has been perfectly served to {member.mention}! 🧊",
-            "gif": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Z6dm9wZWswdzUzMGpydWRmbDN0ajN3N2g1a2F6ODlkaTV5MHl3ZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/9w9Z2YwHsMv8S2uQ8e/giphy.gif"
+            "gif": "https://media.tenor.com/E8b89Yv27m8AAAAC/anime-drink.gif"
         },
         "indian_spicy": {
             "title": "Royal Indian Spicy Platter! 🍛",
             "desc": f"A rich, steaming hot aromatic Indian spicy curry served with premium aesthetic vibes directly to {member.mention}! 🔥🌶️",
-            "gif": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnI0b3pydnd6aDV4cWJicDJuNDU0aXFzdzBzbnVqdnR3OGswNDJhZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26ybvVb95tGhht7zt6/giphy.gif"
+            "gif": "https://media.tenor.com/vH_f9u4F97EAAAAC/anime-curry.gif"
         },
         "donuts": {
             "title": "Glazed Premium Sweet Donuts! 🍩",
             "desc": f"A box of colorful premium glazed donuts with sweet chocolate flakes has been served to {member.mention}! 🌸",
-            "gif": "https://media.giphy.com/media/3o7bu3XilJ5BOiSGic/giphy.gif"
+            "gif": "https://media.tenor.com/p1_wLgS-M34AAAAC/anime-donut.gif"
         }
     }
 
