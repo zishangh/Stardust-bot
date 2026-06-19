@@ -544,7 +544,7 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
 @discord.app_commands.describe(member="The member you want to hug")
 async def hug(interaction: discord.Interaction, member: discord.Member):
     if member.id == interaction.user.id:
-        return await interaction.response.send_message("🤗 *Aww, aapne khud ko hi gale laga liya? So cute!*", ephemeral=True)
+        return await interaction.response.send_message("🤗 *Aww, did you just hug yourself? That's so sweet!*", ephemeral=True)
     
     embed = discord.Embed(
         description=f"✨ **{interaction.user.mention}** wraps their arms tightly around **{member.mention}** for a super warm, cozy hug! *~chu*",
@@ -557,7 +557,7 @@ async def hug(interaction: discord.Interaction, member: discord.Member):
 @discord.app_commands.describe(member="The member you want to kiss")
 async def kiss(interaction: discord.Interaction, member: discord.Member):
     if member.id == interaction.user.id:
-        return await interaction.response.send_message("💋 *Wait... khud ko kiss kaise karoge?*", ephemeral=True)
+        return await interaction.response.send_message("💋 *Wait... how do you even kiss yourself?*", ephemeral=True)
     
     embed = discord.Embed(
         description=f"💖 **{interaction.user.mention}** pulls **{member.mention}** close and gives them a sweet, romantic kiss! *Blushes*",
@@ -570,7 +570,7 @@ async def kiss(interaction: discord.Interaction, member: discord.Member):
 @discord.app_commands.describe(member="The member you want to cuddle")
 async def cuddle(interaction: discord.Interaction, member: discord.Member):
     if member.id == interaction.user.id:
-        return await interaction.response.send_message("🧸 *Grab a blanket if you are feeling lonely!*", ephemeral=True)
+        return await interaction.response.send_message("🧸 *Grab a warm blanket if you are feeling a bit lonely!*", ephemeral=True)
     
     embed = discord.Embed(
         description=f"🐾 **{interaction.user.mention}** snuggles up next to **{member.mention}**, cuddling them closely and feeling super safe.",
@@ -583,7 +583,7 @@ async def cuddle(interaction: discord.Interaction, member: discord.Member):
 @discord.app_commands.describe(member="The member you want to slap")
 async def slap(interaction: discord.Interaction, member: discord.Member):
     if member.id == interaction.user.id:
-        return await interaction.response.send_message("💥 *Ouch! Apne aap ko mat maaro bhai!*", ephemeral=True)
+        return await interaction.response.send_message("💥 *Ouch! Please don't hurt yourself!*", ephemeral=True)
     
     embed = discord.Embed(
         description=f"💢 **{interaction.user.mention}** swings their hand and **SLAPS** **{member.mention}** right across the face! *B-Baka!*",
@@ -606,23 +606,23 @@ async def pat(interaction: discord.Interaction, member: discord.Member):
 @discord.app_commands.describe(member="The member whose tears you want to wipe")
 async def wipetears(interaction: discord.Interaction, member: discord.Member):
     if member.id == interaction.user.id:
-        return await interaction.response.send_message("😢 *Don't cry! Everything is going to be okay.*", ephemeral=True)
+        return await interaction.response.send_message("😢 *Don't cry! Everything is going to be alright.*", ephemeral=True)
     
     embed = discord.Embed(
-        description=f"🥺 **{interaction.user.mention}** leans in softly and gently wipes away the tears from **{member.mention}**'s eyes. *'Don't cry, I am here.'*",
+        description=f"🥺 **{interaction.user.mention}** leans in softly and gently wipes away the tears from **{member.mention}**'s eyes. *'Don't cry, I am right here.'*",
         color=discord.Color.from_rgb(173, 216, 230)
     )
     embed.set_image(url="https://media.otakustrive.com/gifs/cry/cry_008.gif")
     await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="lapride", description="🚲 Give someone a playful ride in your lap/godi!")
+@bot.tree.command(name="lapride", description="🚲 Give someone a playful ride on your lap!")
 @discord.app_commands.describe(member="The member you want to give a lap ride to")
 async def lapride(interaction: discord.Interaction, member: discord.Member):
     if member.id == interaction.user.id:
-        return await interaction.response.send_message("❌ *Aap khud ki godi mein nahi baith sakte!*", ephemeral=True)
+        return await interaction.response.send_message("❌ *You cannot sit on your own lap!*", ephemeral=True)
     
     embed = discord.Embed(
-        description=f"✨ **{interaction.user.mention}** pulls **{member.mention}** into their lap and playfully carries them around! *Wheee!*",
+        description=f"✨ **{interaction.user.mention}** pulls **{member.mention}** onto their lap and playfully carries them around! *Wheee!*",
         color=discord.Color.from_rgb(244, 164, 96)
     )
     embed.set_image(url="https://media.otakustrive.com/gifs/blush/blush_003.gif")
@@ -632,7 +632,7 @@ async def lapride(interaction: discord.Interaction, member: discord.Member):
 @discord.app_commands.describe(member="The member whose hand you want to hold")
 async def handhold(interaction: discord.Interaction, member: discord.Member):
     if member.id == interaction.user.id:
-        return await interaction.response.send_message("🤝 *Holding your own hand? Pure single vibes!*", ephemeral=True)
+        return await interaction.response.send_message("🤝 *Holding your own hand? Sending you a virtual hug!*", ephemeral=True)
     
     embed = discord.Embed(
         description=f"💞 **{interaction.user.mention}** gently reaches out, interlocking fingers to softly hold **{member.mention}**'s hand...",
@@ -645,7 +645,7 @@ async def handhold(interaction: discord.Interaction, member: discord.Member):
 @discord.app_commands.describe(member="The member whose hair you want to tuck away")
 async def hairflip(interaction: discord.Interaction, member: discord.Member):
     if member.id == interaction.user.id:
-        return await interaction.response.send_message("✨ *Aapne apne baal set kar liye!*", ephemeral=True)
+        return await interaction.response.send_message("✨ *You just styled your own hair! looking sharp!*", ephemeral=True)
     
     embed = discord.Embed(
         description=f"😳 **{interaction.user.mention}** leans close, softly tucking a stray strand of hair behind **{member.mention}**'s ear...",
