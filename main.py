@@ -538,78 +538,7 @@ async def serve(interaction: discord.Interaction, item: str, member: discord.Mem
     content_text = f"🛎️ {member.mention}, you have been served a premium meal!"
     await interaction.followup.send(content=content_text, embed=embed)
 
-        "italy_pasta": {
-            "title": "🍝 ITALY: TUSCAN HARVEST",
-            "item_name": "Creamy Alfredo Fettuccine Pasta",
-            "origin": "Tuscany, Italy 🇮🇹",
-            "line": "Perfectly al dente pasta tossed gently in a rich, velvet sauce of aged parmesan, fresh garlic, and melted butter! 🧀"
-        },
-        "china_dimsum": {
-            "title": "🇨🇳 CHINA: IMPERIAL DIM SUM BOX",
-            "item_name": "Steamed Artisan Veg Dim Sums",
-            "origin": "Guangzhou, China 🇨🇳",
-            "line": "A traditional steaming bamboo basket containing delicate, translucent crystal dumplings filled with finely chopped fresh greens! 🥢"
-        },
-        "turkey_baklava": {
-            "title": "🇹🇷 TURKEY: SULTAN'S PALACE DESSERT",
-            "item_name": "Royal Pistachio Baklava",
-            "origin": "Gaziantep, Turkey 🇹🇷",
-            "line": "Rich, sweet pastry made of layers of flaky phyllo dough filled with crushed premium pistachios and sweetened with pure syrup! 🍯"
-        },
-        "korea_tteokbokki": {
-            "title": "🇰🇷 SOUTH KOREA: SEOUL STREET KITCHEN",
-            "item_name": "Spicy Cheesy Tteokbokki",
-            "origin": "Seoul, South Korea 🇰🇷",
-            "line": "Chewy, cylindrical rice cakes simmered beautifully in a fiery, sweet gochujang chili sauce, topped with melted mozzarella! 🌶️"
-        },
-        "thailand_mangorice": {
-            "title": "🇹🇭 THAILAND: EXOTIC SIAM TROPICS",
-            "item_name": "Sweet Mango Sticky Rice",
-            "origin": "Bangkok, Thailand 🇹🇭",
-            "line": "Warm glutinous rice cooked in sweet coconut milk, served with fresh, juicy slices of ripened golden mangoes! 🥭"
-        },
-        "spain_churros": {
-            "title": "🇪🇸 SPAIN: MADRID STREET TREAT",
-            "item_name": "Crispy Cinnamon Churros Box",
-            "origin": "Madrid, Spain 🇪🇸",
-            "line": "Golden fried pastry dough dusted beautifully with cinnamon sugar, served with a cup of rich, warm melted milk chocolate! 🍫"
-        },
-        "usa_waffles": {
-            "title": "🇺🇸 USA: CLASSIC DOWNTOWN DINER",
-            "item_name": "Loaded Premium Buttermilk Waffles",
-            "origin": "New York, USA 🇺🇸",
-            "line": "Fluffy, crispy golden waffles topped with sweet maple syrup, a dollop of fresh whipped cream, and wild berries! 🧇"
-        }
-  
-        
-@bot.tree.command(name="serve", description="🛎️ Serve a premium global meal to a highly distinguished member")
-async def serve(interaction: discord.Interaction, item: str, member: discord.Member):
-    await interaction.response.defer()
-    
-    menu_data = {
-        "coffee": {"title": "BARISTA ESPRESSO", "item_name": "Premium Barista Coffee", "origin": "Milan, Italy 🇮🇹", "line": "A rich, dark aromatic espresso topped with perfect velvety crema."},
-        "donuts": {"title": "GLAZED LUXURY", "item_name": "Gourmet Glazed Donuts", "origin": "Belgium 🇧🇪", "line": "Fluffy, artisanal dough glazed with premium melted white chocolate."},
-        "cold_drink": {"title": "CRYSTAL ICY COLD", "item_name": "Chilled Icy Soda Pop", "origin": "Atlanta, USA 🇺🇸", "line": "An ice-cold sparkling beverage served with fresh mint leaves."},
-        "burger": {"title": "GOURMET STACK", "item_name": "Artisanal Double-Stack Burger", "origin": "Hamburg, Germany 🇩🇪", "line": "Premium grilled cutlet layered with aged cheddar and secret house sauce."},
-        "pizza": {"title": "WOODFIRED ITALIAN", "item_name": "Artisanal Neapolitan Pizza", "origin": "Naples, Italy 🇮🇹", "line": "Authentic sourdough crust topped with fresh mozzarella and torn basil."},
-        "indian_spicy": {"title": "ROYAL CURRY EXPERT", "item_name": "Shahi Indian Mughlai Curry", "origin": "Delhi, India 🇮🇳", "line": "A rich, slow-cooked buttery gravy infused with exotic royal spices."},
-        "japan_mochi": {"title": "MATCHA SUPREME", "item_name": "Sweet Uji Matcha Mochi", "origin": "Kyoto, Japan 🇯🇵", "line": "Soft, chewy rice cake outer layer filled with sweet premium red bean paste."},
-        "mexico_quesadilla": {"title": "CHEESY SUPREME", "item_name": "Smoked Pepper Quesadilla", "origin": "Puebla, Mexico 🇲🇽", "line": "Toasted tortilla loaded with melted Monterey Jack cheese and fresh jalapenos."},
-        "france_croissant": {"title": "BUTTER CRUISE", "item_name": "Flaky Flurries Croissant", "origin": "Paris, France 🇫🇷", "line": "Light, buttery puff pastry layers crafted by elite French artisans."},
-        "italy_pasta": {"title": "CREAMY ALFREDO", "item_name": "Truffle Mushroom Alfredo", "origin": "Rome, Italy 🇮🇹", "line": "Al dente fettuccine tossed in a rich parmesan and wild truffle cream sauce."},
-        "china_dimsum": {"title": "STEAMED BLISS", "item_name": "Crystal Veg Dim Sum Box", "origin": "Guangdong, China 🇨🇳", "line": "Translucent dumpling wraps tightly packing finely minced premium farm greens."},
-        "turkey_baklava": {"title": "ROYAL PISTACHIO", "item_name": "Layered Honey Gold Baklava", "origin": "Gaziantep, Turkey 🇹🇷", "line": "Crispy golden filo sheets dripping with organic honey and crushed pistachios."},
-        "korea_tteokbokki": {"title": "SEOUL SPICY SOUL", "item_name": "Cheesy Gochujang Tteokbokki", "origin": "Seoul, South Korea 🇰🇷", "line": "Simmered chewy cylindrical rice cakes bathed in fiery, sweet chili glaze."},
-        "thailand_mangorice": {"title": "SIAM SWEET", "item_name": "Sweet Coconut Mango Rice", "origin": "Bangkok, Thailand 🇹🇭", "line": "Warm fragrant sticky rice paired with sweet yellow mango slices and coconut milk."},
-        "spain_churros": {"title": "CRISPY CINNAMON", "item_name": "Golden Sweet Churros", "origin": "Madrid, Spain 🇪🇸", "line": "Golden fried pastry dough dusted beautifully with cinnamon sugar, served with a cup of rich, warm chocolate dip."},
-        "usa_waffles": {"title": "USA: CLASSIC DOWNTOWN DINER", "item_name": "Loaded Premium Buttermilk Waffles", "origin": "New York, USA 🇺🇸", "line": "Fluffy, crispy golden waffles topped with sweet maple syrup, a dollop of fresh whipped cream, and wild berries."}
-    }
-    
-    if item not in menu_data:
-        await interaction.followup.send("❌ Error: Invalid menu item selected.")
-        return
 
-    selected = menu_data.get(item)
     
     # 💰 ============ ECONOMY LINKING SYSTEM ============
     prices = {
