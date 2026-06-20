@@ -1513,6 +1513,39 @@ async def on_message(message: discord.Message):
                     print(f"Filter Exception: {e}")
 
     # Yeh line sabhi normal slash commands aur triggers ko chalu rakhegi
+    # 🎮 FREE FIRE STYLE XP GAIN SYSTEM (Automod check ke baad)
+    import time, random
+    user_id = str(message.author.id)
+    current_time = time.time()
+    
+    # 60 seconds cooldown taaki spamming se level up na ho
+    if user_id not in XP_COOLDOWN or (current_time - XP_COOLDOWN[user_id]) > 60:
+        XP_COOLDOWN[user_id] = current_time
+        ranks = load_rank_data()
+        
+        if user_id not in ranks:
+            ranks[user_id] = {"xp": 0, "level": 1}
+            
+        xp_gain = random.randint(15, 25)
+        ranks[user_id]["xp"] += xp_gain
+        
+        # Level Up Requirement: Level * 100
+        xp_needed = ranks[user_id]["level"] * 100
+        if ranks[user_id]["xp"] >= xp_needed:
+            ranks[user_id]["xp"] -= xp_needed
+            ranks[user_id]["level"] += 1
+            new_lvl = ranks[user_id]["level"]
+            new_tier = get_ff_rank(new_lvl)
+            
+            try:
+                await message.channel.send(
+                    f"🎉 **𝘓𝘌𝘝𝘌𝘓 𝘜𝘗!** {message.author.mention} 𝘩𝘢𝘴 𝘢𝘥𝘷𝘢𝘯𝘤𝘦𝘥 𝘵𝘰 **𝘓𝘦𝘷𝘦𝘭 {new_lvl}**!\n"
+                    f"✨ 𝘊𝘶𝘳𝘳𝘦𝘯𝘵 𝘛𝘪𝘦𝘳: ` {new_tier} `"
+                )
+            except:
+                pass
+                
+        save_rank_data(ranks)
     await bot.process_commands(message)
 # PERMISSION ERROR HANDLERS
 @setleaderboard.error
@@ -2143,11 +2176,34 @@ class TicketControlsView(discord.ui.View):
             await interaction.response.send_message("❌ Only server staff or the ticket owner can close this ticket.", ephemeral=True)
             return
 
-        await interaction.response.send_message("🔒 **This ticket is being closed...** Removing channel in 5 seconds.")
-        import asyncio
-        await asyncio.sleep(5)
+        await interaction.response.send_message("🔒 **Generating Transcript and Closing Ticket...**")
+        
+        # 📜 TRANSCRIPT ENGINE
+        log_content = f"--- Ticket Transcript for channel {interaction.channel.name} ---\n\n"
+        async for msg in interaction.channel.history(limit=500, oldest_first=True):
+            log_content += f"[{msg.created_at.strftime('%Y-%m-%d %H:%M:%S')}] {msg.author.name}: {msg.content}\n"
+            if msg.attachments:
+                for att in msg.attachments:
+                    log_content += f"[Attachment] {att.url}\n"
+        
+        file_path = f"transcript-{interaction.channel.name}.txt"
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(log_content)
+            
+        log_channel = discord.utils.get(interaction.guild.text_channels, name="ticket-logs")
+        if log_channel:
+            await log_channel.send(
+                content=f"📜 **Ticket Closed!** Transcript for `{interaction.channel.name}` handled by {interaction.user.mention}.",
+                file=discord.File(file_path)
+            )
+            
+        import os, asyncio
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+        await asyncio.sleep(3)
         try:
-            await interaction.channel.delete(reason="Ticket closed.")
+            await interaction.channel.delete(reason="Ticket closed with transcript logging.")
         except discord.Forbidden:
             pass
 
@@ -2282,6 +2338,68 @@ async def ticket_setup(interaction: discord.Interaction, channel: discord.TextCh
         await interaction.edit_original_response(content=f"✅ **Deployment Complete!** Panel is active in {channel.mention}.")
     except discord.Forbidden:
         await interaction.edit_original_response(content="❌ **Permission Deficit:** Bot cannot write messages in that target location.")
+# ==============================================================================
+# 🎮 FREE FIRE STYLE SERVER RANK DATABASE ENGINE
+# ==============================================================================
+
+RANK_DATA_FILE = "rank_config.json"
+XP_COOLDOWN = {}
+
+def load_rank_data():
+    try:
+        import os, json
+        if os.path.exists(RANK_DATA_FILE):
+            with open(RANK_DATA_FILE, "r") as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error loading rank data: {e}")
+    return {}
+
+def save_rank_data(data):
+    try:
+        import json
+        with open(RANK_DATA_FILE, "w") as f:
+            json.dump(data, f, indent=4)
+    except Exception as e:
+        print(f"Error saving rank data: {e}")
+
+def get_ff_rank(level):
+    if level < 5: return "🥉 Bronze I"
+    elif level < 10: return "🥉 Bronze II"
+    elif level < 15: return "🥈 Silver I"
+    elif level < 20: return "🥈 Silver II"
+    elif level < 25: return "🥇 Gold I"
+    elif level < 30: return "🥇 Gold II"
+    elif level < 35: return "💎 Platinum I"
+    elif level < 40: return "💎 Platinum II"
+    elif level < 45: return "💎 Diamond I"
+    elif level < 50: return "💎 Diamond II"
+    elif level < 60: return "🏆 Heroic"
+    else: return "👑 Grandmaster"
+
+@bot.tree.command(name="rank", description="🎮 Check your Free Fire style server level and rank tier status.")
+async def rank(interaction: discord.Interaction, member: discord.User = None):
+    target = member or interaction.user
+    user_id = str(target.id)
+    ranks = load_rank_data()
+    
+    user_data = ranks.get(user_id, {"xp": 0, "level": 1})
+    lvl = user_data["level"]
+    xp = user_data["xp"]
+    xp_needed = lvl * 100
+    tier = get_ff_rank(lvl)
+    
+    embed = discord.Embed(title=f"🎮 {target.display_name}'s Rank Profile", color=discord.Color.gold())
+    embed.set_thumbnail(url=target.display_avatar.url)
+    embed.add_field(name="✨ Current Tier", value=f"**{tier}**", inline=False)
+    embed.add_field(name="📊 Level", value=f"` {lvl} `", inline=True)
+    embed.add_field(name="🧪 Experience (XP)", value=f"` {xp} / {xp_needed} XP `", inline=True)
+    
+    progress = min(int((xp / xp_needed) * 10), 10)
+    bar = "🟩" * progress + "⬛" * (10 - progress)
+    embed.add_field(name="📈 Progress Bar", value=bar, inline=False)
+    
+    await interaction.response.send_message(embed=embed)
 
 # Deploy System Launch Configuration
 keep_alive()
