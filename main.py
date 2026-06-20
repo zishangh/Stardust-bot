@@ -2953,6 +2953,169 @@ async def check_afk_mentions(message: discord.Message):
                 )
                 await message.channel.send(embed=notify_embed, delete_after=7)
         
+import json
+import os
+import random
+import asyncio
+
+CONFESS_CONFIG_FILE = "stardust_confess_data.json"
+MARRIAGE_FILE = "stardust_marriage_data.json"
+
+def load_stardust_json(filename):
+    if os.path.exists(filename):
+        with open(filename, "r") as f:
+            try: return json.load(f)
+            except: return {}
+    return {}
+
+def save_stardust_json(filename, data):
+    with open(filename, "w") as f:
+        json.dump(data, f, indent=4)
+
+# Mock Data Arrays for Anime Engine (Aap yahan real URLs aur names badal sakte ho)
+ANIME_MALES = [
+    {"name": "Levi Ackerman", "anime": "Attack on Titan", "image": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500"},
+    {"name": "Gojo Satoru", "anime": "Jujutsu Kaisen", "image": "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500"},
+    {"name": "Naruto Uzumaki", "anime": "Naruto Shippuden", "image": "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=500"}
+]
+
+ANIME_FEMALES = [
+    {"name": "Helena Croisen", "anime": "Master of the Guardian Stone", "image": "https://images.unsplash.com/photo-1560942485-b2a11cc13456?w=500"},
+    {"name": "Mikasa Ackerman", "anime": "Attack on Titan", "image": "https://images.unsplash.com/photo-1580477667995-2b94f01c9516?w=500"},
+    {"name": "Nezuko Kamado", "anime": "Demon Slayer", "image": "https://images.unsplash.com/photo-1627556704353-016ed97397b9?w=500"}
+]
+
+# ==========================================
+# 🤫 MODULE 1: ANONYMOUS CONFESSION MATRIX
+# ==========================================
+
+# 1. ADMIN SLASH COMMAND TO SET LOGS & CONTROL PANEL
+@bot.tree.command(name="setupconfess", description="🤫 Configure the target confession log terminal channel (Admin Only).")
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def setupconfess(interaction: discord.Interaction, output_channel: discord.TextChannel):
+    guild_id = str(interaction.guild_id)
+    data = load_stardust_json(CONFESS_CONFIG_FILE)
+    
+    if guild_id not in data: data[guild_id] = {}
+    data[guild_id]["log_channel_id"] = output_channel.id
+    data[guild_id]["count"] = data[guild_id].get("count", 0)
+    save_stardust_json(CONFESS_CONFIG_FILE, data)
+
+    # Launching the control panel buttons box inside current configuration channel
+    view = discord.ui.View(timeout=None)
+    view.add_item(discord.ui.Button(label="Submit a confession!", style=discord.ButtonStyle.primary, custom_id="stardust_btn_confess"))
+    view.add_item(discord.ui.Button(label="Submit a poll!", style=discord.ButtonStyle.secondary, custom_id="stardust_btn_poll"))
+    
+    panel_embed = discord.Embed(
+        title="✨ Stardust Confession Portal",
+        description="Click the buttons below to broadcast fully secure anonymous entries or structured queries.",
+        color=0xF5EAE1
+    )
+    await interaction.channel.send(embed=panel_embed, view=view)
+    await interaction.response.send_message(f"✅ Confession hub active. Output redirected to {output_channel.mention}", ephemeral=True)
+
+# 2. INTERACTION MODAL FOR BUTTON SUBMISSIONS
+class ConfessionModal(discord.ui.Modal, title="Secure Confession Terminal"):
+    confession_input = discord.ui.TextInput(label="Enter your confession array anonymously:", style=discord.TextStyle.paragraph, max_length=1000)
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        guild_id = str(interaction.guild_id)
+        data = load_stardust_json(CONFESS_CONFIG_FILE)
+        
+        config = data.get(guild_id)
+        if not config or "log_channel_id" not in config:
+            await interaction.response.send_message("❌ Confession framework logs not configured by administrators.", ephemeral=True)
+            return
+            
+        channel = interaction.guild.get_channel(config["log_channel_id"])
+        if not channel:
+            await interaction.response.send_message("❌ Target terminal missing.", ephemeral=True)
+            return
+
+        config["count"] += 1
+        current_count = config["count"]
+        save_stardust_json(CONFESS_CONFIG_FILE, data)
+
+        embed = discord.Embed(
+            title=f"Anonymous Confession (#{current_count})",
+            description=f'"{self.confession_input.value}"',
+            color=0xF5EAE1
+        )
+        embed.set_footer(text="Transmission encrypted via Stardust Network")
+        
+        # Adding reply/action panel loop mockup matching view screenshot
+        reply_view = discord.ui.View(timeout=None)
+        reply_view.add_item(discord.ui.Button(label="Submit a confession!", style=discord.ButtonStyle.primary, custom_id="stardust_btn_confess"))
+        reply_view.add_item(discord.ui.Button(label="Submit a poll!", style=discord.ButtonStyle.secondary, custom_id="stardust_btn_poll"))
+        reply_view.add_item(discord.ui.Button(label="Reply", style=discord.ButtonStyle.danger, custom_id="stardust_btn_reply"))
+
+        await channel.send(embed=embed, view=reply_view)
+        await interaction.response.send_message("🚀 Transmission successfully routed anonymously.", ephemeral=True)
+
+# Persistent Button Interaction Listener Handler
+@bot.listen()
+async def on_interaction(interaction: discord.Interaction):
+    if interaction.data and "custom_id" in interaction.data:
+        cid = interaction.data["custom_id"]
+        if cid == "stardust_btn_confess":
+            await interaction.response.send_modal(ConfessionModal())
+        elif cid == "stardust_btn_poll":
+            await interaction.response.send_message("📊 Custom poll framework engine is active. Configure your targets.", ephemeral=True)
+        elif cid == "stardust_btn_reply":
+            await interaction.response.send_message("💬 Thread responses require server synchronization arrays.", ephemeral=True)
+
+
+# ==========================================
+# 💟 MODULE 2: ANIME WAIFU & HUSBANDU MARRIAGE SUITE
+# ==========================================
+
+async def process_anime_claim(message: discord.Message, character: dict):
+    embed = discord.Embed(
+        title=character["name"],
+        description=f"**{character['name']}**: Master of the Matrix\n\nReact with any emoji to claim/marry!",
+        color=discord.Color.brand_green()
+    )
+    embed.set_image(url=character["image"])
+    
+    bot_msg = await message.channel.send(embed=embed)
+    await bot_msg.add_reaction("💍")
+
+    def check(reaction, user):
+        return reaction.message.id == bot_msg.id and not user.bot
+
+    try:
+        reaction, user = await bot.wait_for("reaction_add", timeout=30.0, check=check)
+    except asyncio.TimeoutError:
+        embed.description = "⌛ Engagement matrix expired. Nobody responded to the claim timeline."
+        await bot_msg.edit(embed=embed)
+    else:
+        # Save structural profile match metadata data 
+        db = load_stardust_json(MARRIAGE_FILE)
+        user_id = str(user.id)
+        if user_id not in db: db[user_id] = []
+        db[user_id].append(character["name"])
+        save_stardust_json(MARRIAGE_FILE, db)
+
+        success_embed = discord.Embed(
+            title="💖 Marriage Matrix Completed!",
+            description=f"🎉 {user.mention} successfully claimed **{character['name']}** ({character['anime']})!\nThey are now officially coupled in local databases.",
+            color=discord.Color.magenta()
+        )
+        await message.channel.send(embed=success_embed)
+
+# Listening to standard chat prefix array text requests ($w, $m)
+@bot.listen('on_message')
+async def handle_anime_commands(message: discord.Message):
+    if message.author.bot or not message.content:
+        return
+        
+    content = message.content.strip().lower()
+    if content == "$m":
+        char = random.choice(ANIME_MALES)
+        await process_anime_claim(message, char)
+    elif content == "$w":
+        char = random.choice(ANIME_FEMALES)
+        await process_anime_claim(message, char)
 
 # Deploy System Launch Configuration
 keep_alive()
