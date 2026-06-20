@@ -4,6 +4,7 @@ from discord.ext import commands
 from discord import app_commands
 from flask import Flask
 from threading import Thread
+from flask_cors import CORS
 import datetime
 import json
 import random
@@ -16,10 +17,40 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 # =========================================================
 app = Flask('')
 
+CORS(app)
 @app.route('/')
 def home():
     return "Stardust Premium Engine Operational."
+CLIENT_ID = '1517046273037832342'
+CLIENT_SECRET = '9glpWzQdibCbdnTwt8joqvs97hfuY03f'  # ⚠️ Portal se copy kiya hua Client Secret yahan dalo bhai
+REDIRECT_URI = 'https://zishangh.github.io/Stardust-website/'
 
+@app.route('/api/callback')
+def callback():
+    code = request.args.get('code')
+    if not code:
+        return jsonify({'error': 'No code provided'}), 400
+        
+    data = {
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET,
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': REDIRECT_URI
+    }
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    r = requests.post('https://discord.com/api/v10/oauth2/token', data=data, headers=headers)
+    token_json = r.json()
+    token = token_json.get('access_token')
+
+    if not token:
+        return jsonify({'error': 'Failed to get token', 'details': token_json}), 400
+
+    user_headers = {'Authorization': f'Bearer {token}'}
+    user_r = requests.get('https://discord.com/api/v10/users/@me', headers=user_headers)
+    
+    return jsonify(user_r.json())
+    
 def run():
     app.run(host='0.0.0.0', port=8080)
 
