@@ -2762,6 +2762,130 @@ async def rollmatrix(interaction: discord.Interaction):
     )
     embed.set_footer(text="Stardust Pseudo-Random Number Generator")
     await interaction.response.send_message(embed=embed)
+import json
+import os
+
+LEAVE_CONFIG_FILE = "leave_config.json"
+
+# Helper functions to load/save channel & message configuration
+def load_leave_config():
+    if os.path.exists(LEAVE_CONFIG_FILE):
+        with open(LEAVE_CONFIG_FILE, "r") as f:
+            try:
+                return json.load(f)
+            except:
+                return {}
+    return {}
+
+def save_leave_config(data):
+    with open(LEAVE_CONFIG_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+# ==========================================
+# 🚪 STARDUST PREMIUM LEAVE CONFIGURATION SUITE
+# ==========================================
+
+# 1. COMMAND: LEAVE CHANNEL SET
+@bot.tree.command(name="leavechannel", description="🔀 Set the specific text channel where leave logs will be transmitted.")
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def leavechannel(interaction: discord.Interaction, channel: discord.TextChannel):
+    guild_id = str(interaction.guild_id)
+    config = load_leave_config()
+    
+    if guild_id not in config:
+        config[guild_id] = {}
+        
+    config[guild_id]["channel_id"] = channel.id
+    save_leave_config(config)
+    
+    embed = discord.Embed(
+        title="⚙️ Configuration Updated",
+        description=f"Successfully linked the Stardust Leave Terminal to {channel.mention}.\nAll core departure arrays will be routed here.",
+        color=0xF5EAE1
+    )
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+# 2. COMMAND: LEAVE MSG SET
+@bot.tree.command(name="leavemsg", description="✍️ Customize the departure notice text. Use {user} for ping and {server} for server name.")
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def leavemsg(interaction: discord.Interaction, message: str):
+    guild_id = str(interaction.guild_id)
+    config = load_leave_config()
+    
+    if guild_id not in config:
+        config[guild_id] = {}
+        
+    config[guild_id]["custom_message"] = message
+    save_leave_config(config)
+    
+    embed = discord.Embed(
+        title="⚙️ Custom Template Saved",
+        description=f"Your customized departure syntax has been logged:\n\n`{message}`",
+        color=0xF5EAE1
+    )
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+# 3. COMMAND: LEAVE TEST
+@bot.tree.command(name="leavetest", description="🧪 Simulate a mock user departure event to diagnose active configurations.")
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def leavetest(interaction: discord.Interaction):
+    guild_id = str(interaction.guild_id)
+    config = load_leave_config()
+    
+    channel_id = config.get(guild_id, {}).get("channel_id")
+    custom_msg = config.get(guild_id, {}).get("custom_message", "has left the matrix.")
+    
+    channel = interaction.guild.get_channel(channel_id) if channel_id else interaction.channel
+    
+    # Formatting user ping and server variables inside text
+    formatted_text = custom_msg.replace("{user}", interaction.user.mention).replace("{server}", interaction.guild.name)
+    
+    embed = discord.Embed(
+        title="🚪 Connection Terminated (Simulated)",
+        description=f"{formatted_text}\n\n"
+                    f"**Identity Array:** {interaction.user.name}\n"
+                    f"**Database Status:** `OFFLINE / COLD STORAGE`",
+        color=0xF5EAE1
+    )
+    embed.add_field(name="Network Population metrics", value=f"`{interaction.guild.member_count}` units remaining", inline=False)
+    embed.set_thumbnail(url=interaction.user.display_avatar.url)
+    embed.set_footer(text="Stardust Diagnostic Simulation Loop")
+    
+    if channel_id:
+        await channel.send(content=f"⚠️ {interaction.user.mention} (Simulation Trigger)", embed=embed)
+        await interaction.response.send_message(f"✅ Diagnostic array transmitted successfully to {channel.mention}.", ephemeral=True)
+    else:
+        await interaction.response.send_message(content=f"⚠️ {interaction.user.mention} (No Channel Configured, using current)", embed=embed)
+
+# 4. REAL-TIME EVENT LISTENER
+@bot.listen()
+async def on_member_remove(member: discord.Member):
+    guild_id = str(member.guild.id)
+    config = load_leave_config()
+    
+    guild_config = config.get(guild_id)
+    if not guild_config or "channel_id" not in guild_config:
+        return
+        
+    channel = member.guild.get_channel(guild_config["channel_id"])
+    if not channel:
+        return
+        
+    custom_msg = guild_config.get("custom_message", "has terminated their connection ledger.")
+    formatted_text = custom_msg.replace("{user}", member.mention).replace("{server}", member.guild.name)
+    
+    embed = discord.Embed(
+        title="🚪 Connection Disconnected",
+        description=f"{formatted_text}\n\n"
+                    f"**Identification Matrix:** {member.name}\n"
+                    f"**Terminal Status:** `DEACTIVATED`",
+        color=0xF5EAE1
+    )
+    embed.add_field(name="Remaining Core Population", value=f"`{member.guild.member_count}` active units", inline=False)
+    embed.set_thumbnail(url=member.display_avatar.url)
+    embed.set_footer(text="Stardust Automation Infrastructure")
+    
+    await channel.send(content=f"⚠️ **Session Terminated:** {member.mention}", embed=embed)
 
 # Deploy System Launch Configuration
 keep_alive()
