@@ -2886,6 +2886,140 @@ async def on_member_remove(member: discord.Member):
     embed.set_footer(text="Stardust Automation Infrastructure")
     
     await channel.send(content=f"⚠️ **Session Terminated:** {member.mention}", embed=embed)
+import json
+import os
+import asyncio
+
+# Configurations Files for persistence
+AFK_FILE = "stardust_afk.json"
+AUTOMOD_FILE = "stardust_automod.json"
+
+def load_json_data(filename):
+    if os.path.exists(filename):
+        with open(filename, "r") as f:
+            try: return json.load(f)
+            except: return {}
+    return {}
+
+def save_json_data(filename, data):
+    with open(filename, "w") as f:
+        json.dump(data, f, indent=4)
+
+# Cache dictionary for anti-spam detection (User ID -> List of timestamps)
+STARDUST_SPAM_CACHE = {}
+
+# ==========================================
+# 💤 MODULE 1: PREMIUM AFK ENGINE
+# ==========================================
+
+@bot.tree.command(name="afk", description="💤 Go Away From Keyboard with a custom status matrix.")
+async def afk_command(interaction: discord.Interaction, reason: str = "Inertia/Away"):
+    user_id = str(interaction.user.id)
+    afk_data = load_json_data(AFK_FILE)
+    
+    afk_data[user_id] = {
+        "reason": reason,
+        "timestamp": int(asyncio.get_event_loop().time())
+    }
+    save_json_data(AFK_FILE, afk_data)
+    
+    embed = discord.Embed(
+        title="💤 AFK System Activated",
+        description=f"{interaction.user.mention} is now status-logged as **AFK**.\n\n📝 **Reason:** `{reason}`",
+        color=0xF5EAE1
+    )
+    await interaction.response.send_message(embed=embed)
+
+
+# ==========================================
+# 🛡️ MODULE 2: CARL-STYLE CUSTOM AUTOMOD
+# ==========================================
+
+# 1. COMMAND: TOGGLE & CUSTOMIZE ANTI-SPAM Settings
+@bot.tree.command(name="setupautomod", description="🛡️ Configure the advanced anti-spam threshold (Admin Only).")
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def setupautomod(interaction: discord.Interaction, enabled: bool, max_messages: int = 5, seconds_interval: int = 3):
+    guild_id = str(interaction.guild_id)
+    automod_data = load_json_data(AUTOMOD_FILE)
+    
+    automod_data[guild_id] = {
+        "enabled": enabled,
+        "max_messages": max_messages,
+        "interval": seconds_interval
+    }
+    save_json_data(AUTOMOD_FILE, automod_data)
+    
+    status_text = "ENABLED 🟢" if enabled else "DISABLED 🔴"
+    embed = discord.Embed(
+        title="🛡️ Matrix AutoMod Configuration",
+        description=f"Advanced spam containment protocols updated for this server.",
+        color=0xF5EAE1
+    )
+    embed.add_field(name="AutoMod Status", value=f"`{status_text}`", inline=True)
+    embed.add_field(Threshold Limit=f"`{max_messages} messages` within `{seconds_interval}s`", inline=False)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+# ==========================================
+# 🔄 COMBINED AUTOMATED LISTENER (AFK + SPAM MONITOR)
+# ==========================================
+
+@bot.listen()
+async def on_message(message: discord.Message):
+    if message.author.bot or not message.guild:
+        return
+
+    guild_id = str(message.guild.id)
+    author_id = str(message.author.id)
+    current_time = asyncio.get_event_loop().time()
+
+    # 🛑 SECTION A: CARL-STYLE ANTI-SPAM PROTOCOL
+    automod_config = load_json_data(AUTOMOD_FILE).get(guild_id, {"enabled": False, "max_messages": 5, "interval": 3})
+    
+    if automod_config.get("enabled"):
+        if author_id not in STARDUST_SPAM_CACHE:
+            STARDUST_SPAM_CACHE[author_id] = []
+        
+        # Filter timestamps within current window interval
+        STARDUST_SPAM_CACHE[author_id] = [t for t in STARDUST_SPAM_CACHE[author_id] if current_time - t < automod_config["interval"]]
+        STARDUST_SPAM_CACHE[author_id].append(current_time)
+        
+        if len(STARDUST_SPAM_CACHE[author_id]) > automod_config["max_messages"]:
+            try:
+                await message.delete()
+                # Automated structural warn notice
+                warn_embed = discord.Embed(
+                    title="⚠️ Rate-Limit Disruption Blocked",
+                    description=f"{message.author.mention}, you are sending transmissions too rapidly. Spam matrix mitigation active.",
+                    color=discord.Color.orange()
+                )
+                await message.channel.send(embed=warn_embed, delete_after=5)
+                return # Stop processing further if user is spamming
+            except discord.Forbidden:
+                pass
+
+    # 👤 SECTION B: AFK REMOVER (When AFK user speaks)
+    afk_data = load_json_data(AFK_FILE)
+    if author_id in afk_data:
+        del afk_data[author_id]
+        save_json_data(AFK_FILE, afk_data)
+        welcome_embed = discord.Embed(
+            description=f"✨ Welcome back {message.author.mention}! Your **AFK terminal profile** has been deleted.",
+            color=0xF5EAE1
+        )
+        await message.channel.send(embed=welcome_embed, delete_after=5)
+
+    # 📣 SECTION C: AFK PING RESPONDER (When someone mentions an AFK user)
+    if message.mentions:
+        for mentioned_user in message.mentions:
+            mentioned_id = str(mentioned_user.id)
+            if mentioned_id in afk_data:
+                reason = afk_data[mentioned_id]["reason"]
+                notify_embed = discord.Embed(
+                    description=f"💤 {mentioned_user.name} is currently **AFK**.\n📝 **Reason:** `{reason}`",
+                    color=0xF5EAE1
+                )
+                await message.channel.send(embed=notify_embed, delete_after=7)
 
 # Deploy System Launch Configuration
 keep_alive()
