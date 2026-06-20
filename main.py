@@ -2400,6 +2400,316 @@ async def rank(interaction: discord.Interaction, member: discord.User = None):
     embed.add_field(name="📈 Progress Bar", value=bar, inline=False)
     
     await interaction.response.send_message(embed=embed)
+# ==============================================================================
+# 🎮 STARDUST CAFE CASINO & MINI-GAMES SUITE (BUTTON BASED)
+# ==============================================================================
+import random
+import asyncio
+
+# Helper function to reward economy coins safely
+async def reward_stardust_coins(bot, guild, user_id, amount):
+    """Internal helper to connect with your economy system's background data file"""
+    try:
+        # Aapki economy database file loading system ko access karne ki koshish
+        import os, json
+        econ_file = "economy_config.json" # Agar aapka file name alag hai toh yahan badal sakte hain
+        if os.path.exists(econ_file):
+            with open(econ_file, "r") as f:
+                data = json.load(f)
+            u_id = str(user_id)
+            if u_id in data:
+                # Agar wallet/bank system hai toh us hisab se adjust karein
+                if "wallet" in data[u_id]: data[u_id]["wallet"] += amount
+                elif "balance" in data[u_id]: data[u_id]["balance"] += amount
+                else: data[u_id] = data.get(u_id, 0) + amount
+            else:
+                data[u_id] = {"wallet": amount, "bank": 0}
+            with open(econ_file, "w") as f:
+                json.dump(data, f, indent=4)
+    except Exception as e:
+        print(f"Economy reward injection auto-fallback: {e}")
+
+# ------------------------------------------------------------------------------
+# 🪨📄✂️ GAME 1: ROCK PAPER SCISSORS
+# ------------------------------------------------------------------------------
+class RPSView(discord.ui.View):
+    def __init__(self, p1, p2=None):
+        super().__init__(timeout=60)
+        self.p1 = p1
+        self.p2 = p2 # None means playing with Bot
+        self.choices = {}
+
+    async def check_winner(self, interaction):
+        c1 = self.choices[self.p1.id]
+        c2 = self.choices[self.p2.id] if self.p2 else random.choice(["rock", "paper", "scissors"])
+        
+        p2_name = self.p2.display_name if self.p2 else "Stardust Bot"
+        msg = f"🪨 **RPS Results:**\n{self.p1.mention} chose **{c1.upper()}**\n"
+        msg += f"{self.p2.mention if self.p2 else '🤖 Stardust Bot'} chose **{c2.upper()}**\n\n"
+
+        if c1 == c2:
+            msg += "🤝 **It's a TIE!** No coins rewarded."
+        elif (c1 == "rock" and c2 == "scissors") or (c1 == "paper" and c2 == "rock") or (c1 == "scissors" and c2 == "paper"):
+            msg += f"🏆 {self.p1.mention} **WINS the match!** 🎉\n💰 **+100 Stardust Coins** credited to vault!"
+            await reward_stardust_coins(interaction.client, interaction.guild, self.p1.id, 100)
+        else:
+            if self.p2:
+                msg += f"🏆 {self.p2.mention} **WINS the match!** 🎉\n💰 **+100 Stardust Coins** credited to vault!"
+                await reward_stardust_coins(interaction.client, interaction.guild, self.p2.id, 100)
+            else:
+                msg += "🤖 **Stardust Bot Wins!** Better luck next time, buddy."
+
+        self.stop()
+        await interaction.message.edit(content=msg, view=None)
+
+    @discord.ui.button(label="Rock 🪨", style=discord.ButtonStyle.primary, custom_id="rps_rock")
+    async def rock(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id not in [self.p1.id, getattr(self.p2, 'id', None)] and self.p2:
+            return await interaction.response.send_message("❌ This game is not for you!", ephemeral=True)
+        
+        self.choices[interaction.user.id] = "rock"
+        await interaction.response.send_message("✅ Choice locked!", ephemeral=True)
+        
+        if not self.p2 or (self.p1.id in self.choices and self.p2.id in self.choices):
+            await self.check_winner(interaction)
+
+    @discord.ui.button(label="Paper 📄", style=discord.ButtonStyle.success, custom_id="rps_paper")
+    async def paper(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id not in [self.p1.id, getattr(self.p2, 'id', None)] and self.p2:
+            return await interaction.response.send_message("❌ This game is not for you!", ephemeral=True)
+        
+        self.choices[interaction.user.id] = "paper"
+        await interaction.response.send_message("✅ Choice locked!", ephemeral=True)
+        
+        if not self.p2 or (self.p1.id in self.choices and self.p2.id in self.choices):
+            await self.check_winner(interaction)
+
+    @discord.ui.button(label="Scissors ✂️", style=discord.ButtonStyle.danger, custom_id="rps_scissors")
+    async def scissors(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id not in [self.p1.id, getattr(self.p2, 'id', None)] and self.p2:
+            return await interaction.response.send_message("❌ This game is not for you!", ephemeral=True)
+        
+        self.choices[interaction.user.id] = "scissors"
+        await interaction.response.send_message("✅ Choice locked!", ephemeral=True)
+        
+        if not self.p2 or (self.p1.id in self.choices and self.p2.id in self.choices):
+            await self.check_winner(interaction)
+
+@bot.tree.command(name="play_rps", description="🪨 Play Rock Paper Scissors alone or with a friend to earn coins!")
+async def play_rps(interaction: discord.Interaction, opponent: discord.User = None):
+    if opponent and opponent.id == interaction.user.id:
+        return await interaction.response.send_message("❌ Apne sath nahi khel sakte bhai!", ephemeral=True)
+    
+    ping_str = f"🎮 {interaction.user.mention} vs {opponent.mention if opponent else '🤖 Stardust Bot'}\nGame is active! Lock your secret choices below!"
+    view = RPSView(interaction.user, opponent)
+    await interaction.response.send_message(content=ping_str, view=view)
+
+# ------------------------------------------------------------------------------
+# ❌⭕ GAME 2: TIC TAC TOE
+# ------------------------------------------------------------------------------
+class TTTButton(discord.ui.Button):
+    def __init__(self, x, y):
+        super().__init__(style=discord.ButtonStyle.secondary, label="\u200b", row=y)
+        self.x = x
+        self.y = y
+
+    async def callback(self, interaction: discord.Interaction):
+        view: TTTView = self.view
+        if interaction.user.id != view.current_player.id:
+            return await interaction.response.send_message("❌ Abhi aapki turn nahi hai!", ephemeral=True)
+
+        if view.board[self.y][self.x] != 0:
+            return await interaction.response.send_message("❌ This square is already taken!", ephemeral=True)
+
+        # Handle move
+        if view.current_player == view.p1:
+            self.label = "❌"
+            self.style = discord.ButtonStyle.danger
+            view.board[self.y][self.x] = 1
+        else:
+            self.label = "⭕"
+            self.style = discord.ButtonStyle.success
+            view.board[self.y][self.x] = 2
+
+        self.disabled = True
+
+        # Check winner conditions
+        winner = view.check_board_winner()
+        if winner == 1:
+            content = f"🏆 {view.p1.mention} **WINS TicTacToe!** ❌\n💰 **+200 Stardust Coins** loaded into treasury!"
+            await reward_stardust_coins(interaction.client, interaction.guild, view.p1.id, 200)
+            view.disable_all_buttons()
+            view.stop()
+        elif winner == 2:
+            p2_mention = view.p2.mention if view.p2 else "🤖 Stardust Bot"
+            content = f"🏆 {p2_mention} **WINS TicTacToe!** ⭕\n💰 **+200 Stardust Coins** loaded into treasury!"
+            if view.p2: await reward_stardust_coins(interaction.client, interaction.guild, view.p2.id, 200)
+            view.disable_all_buttons()
+            view.stop()
+        elif view.is_board_full():
+            content = "🤝 **Match Tied!** The grid is full."
+            view.disable_all_buttons()
+            view.stop()
+        else:
+            # Switch turn
+            if view.p2:
+                view.current_player = view.p2 if view.current_player == view.p1 else view.p1
+                content = f"🎮 Turn: {view.current_player.mention} ({'❌' if view.current_player == view.p1 else '⭕'})"
+            else:
+                # Bot automated logic
+                view.bot_move()
+                winner = view.check_board_winner()
+                if winner == 2:
+                    content = "🤖 **Stardust Bot Wins TicTacToe!** Rest up, player."
+                    view.disable_all_buttons()
+                    view.stop()
+                elif view.is_board_full():
+                    content = "🤝 **Match Tied!** Both grids locked out."
+                    view.disable_all_buttons()
+                    view.stop()
+                else:
+                    content = f"🎮 Your turn again: {view.p1.mention} (❌)"
+
+        await interaction.response.edit_message(content=content, view=view)
+
+class TTTView(discord.ui.View):
+    def __init__(self, p1, p2=None):
+        super().__init__(timeout=180)
+        self.p1 = p1
+        self.p2 = p2
+        self.current_player = p1
+        self.board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+
+        for y in range(3):
+            for x in range(3):
+                self.add_item(TTTButton(x, y))
+
+    def check_board_winner(self):
+        # Rows and Columns check
+        for i in range(3):
+            if self.board[i][0] == self.board[i][1] == self.board[i][2] != 0: return self.board[i][0]
+            if self.board[0][i] == self.board[1][i] == self.board[2][i] != 0: return self.board[0][i]
+        # Diagonals check
+        if self.board[0][0] == self.board[1][1] == self.board[2][2] != 0: return self.board[0][0]
+        if self.board[0][2] == self.board[1][1] == self.board[2][0] != 0: return self.board[0][2]
+        return 0
+
+    def is_board_full(self):
+        return all(cell != 0 for row in self.board for cell in row)
+
+    def disable_all_buttons(self):
+        for item in self.children:
+            if isinstance(item, discord.ui.Button): item.disabled = True
+
+    def bot_move(self):
+        empty_cells = [(x, y) for y in range(3) for x in range(3) if self.board[y][x] == 0]
+        if empty_cells:
+            x, y = random.choice(empty_cells)
+            self.board[y][x] = 2
+            for item in self.children:
+                if isinstance(item, discord.ui.Button) and item.x == x and item.y == y:
+                    item.label = "⭕"
+                    item.style = discord.ButtonStyle.success
+                    item.disabled = True
+
+@bot.tree.command(name="play_ttt", description="❌ Play dynamic Tic Tac Toe grid alone or challenge friends for cash prizes.")
+async def play_ttt(interaction: discord.Interaction, opponent: discord.User = None):
+    if opponent and opponent.id == interaction.user.id:
+        return await interaction.response.send_message("❌ Khud ko challenge mat karo bhai!", ephemeral=True)
+    
+    view = TTTView(interaction.user, opponent)
+    welcome_str = f"🎮 **Tic-Tac-Toe Arena Active!**\n❌ {interaction.user.mention} matches up against ⭕ {opponent.mention if opponent else '🤖 Stardust Bot'}\n\nTurn: {interaction.user.mention} (❌)"
+    await interaction.response.send_message(content=welcome_str, view=view)
+
+# ------------------------------------------------------------------------------
+# 🔠 GAME 3: WORD MATCH / JUMBLE
+# ------------------------------------------------------------------------------
+WORD_POOL = ["stardust", "galaxy", "barista", "nebula", "lounge", "cosmic", "premium", "manager"]
+
+@bot.tree.command(name="play_word", description="🔠 Solve scrambled words instantly to earn fast Stardust coins.")
+async def play_word(interaction: discord.Interaction):
+    original = random.choice(WORD_POOL)
+    jumbled = "".join(random.sample(original, len(original)))
+    
+    await interaction.response.send_message(
+        f"⏳ **Word Match Active!** Unscramble this word: 🧩 **` {jumbled.upper()} `**\n"
+        f"Drop your answer in chat within 30 seconds! {interaction.user.mention}"
+    )
+
+    def check(m):
+        return m.author.id == interaction.user.id and m.channel.id == interaction.channel.id
+
+    try:
+        guess_msg = await bot.wait_for("message", check=check, timeout=30.0)
+        if guess_msg.content.lower().strip() == original:
+            await guess_msg.reply(f"🎉 **Correct Answer!** You resolved the puzzle.\n💰 **+150 Stardust Coins** added to your account!")
+            await reward_stardust_coins(interaction.client, interaction.guild, interaction.user.id, 150)
+        else:
+            await guess_msg.reply(f"❌ **Wrong Answer!** The accurate cosmic word was **{original.upper()}**.")
+    except asyncio.TimeoutError:
+        await interaction.channel.send(f"⏰ {interaction.user.mention} **Time's up!** The word was **{original.upper()}**.")
+
+# ------------------------------------------------------------------------------
+# 💥 GAME 4: MULTIPLAYER SLAP MATCH
+# ------------------------------------------------------------------------------
+class SlapView(discord.ui.View):
+    def __init__(self, p1, p2=None):
+        super().__init__(timeout=45)
+        self.p1 = p1
+        self.p2 = p2
+        self.p1_hp = 100
+        self.p2_hp = 100
+        self.current_turn = p1
+
+    @discord.ui.button(label="💥 SWING SLAP!", style=discord.ButtonStyle.danger, custom_id="slap_action")
+    async def slap(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.current_turn.id:
+            return await interaction.response.send_message("❌ Ruko bhai, abhi samne wale ki baari hai!", ephemeral=True)
+
+        damage = random.randint(15, 35)
+        p2_name = self.p2.mention if self.p2 else "🤖 Stardust Bot"
+
+        if self.current_turn == self.p1:
+            self.p2_hp = max(0, self.p2_hp - damage)
+            log_str = f"👋 {self.p1.mention} slapped {p2_name} causing **{damage} HP damage**!\n"
+            if self.p2_hp == 0:
+                log_str += f"\n🏆 **{self.p1.mention} KNOCKED OUT the opponent and wins!**\n💰 **+250 Stardust Coins** mint reward!"
+                await reward_stardust_coins(interaction.client, interaction.guild, self.p1.id, 250)
+                self.stop()
+                return await interaction.response.edit_message(content=log_str, view=None)
+            self.current_turn = self.p2 if self.p2 else self.p1
+        else:
+            self.p1_hp = max(0, self.p1_hp - damage)
+            log_str = f"👋 {self.p2.mention} slapped {self.p1.mention} causing **{damage} HP damage**!\n"
+            if self.p1_hp == 0:
+                log_str += f"\n🏆 **{self.p2.mention} KNOCKED OUT {self.p1.mention} and wins!**\n💰 **+250 Stardust Coins** mint reward!"
+                await reward_stardust_coins(interaction.client, interaction.guild, self.p2.id, 250)
+                self.stop()
+                return await interaction.response.edit_message(content=log_str, view=None)
+            self.current_turn = self.p1
+
+        # Bot retaliation round if singleplayer
+        if not self.p2 and self.p2_hp > 0:
+            bot_damage = random.randint(12, 30)
+            self.p1_hp = max(0, self.p1_hp - bot_damage)
+            log_str += f"🤖 **Stardust Bot swings back** and slaps {self.p1.mention} for **{bot_damage} HP damage**!\n"
+            if self.p1_hp == 0:
+                log_str += f"\n💀 **Stardust Bot wins by KO!** Better luck next time."
+                self.stop()
+                return await interaction.response.edit_message(content=log_str, view=None)
+
+        status_bar = f"\n📊 **Current Health Status:**\n❤️ {self.p1.mention}: `{self.p1_hp}/100 HP`\n💙 {p2_name}: `{self.p2_hp}/100 HP`"
+        status_bar += f"\n\n👉 Next Turn: {self.current_turn.mention if self.p2 else self.p1.mention}"
+        await interaction.response.edit_message(content=log_str + status_bar, view=self)
+
+@bot.tree.command(name="play_slap", description="💥 Interactive funny slap fighting game against bots or real members.")
+async def play_slap(interaction: discord.Interaction, opponent: discord.User = None):
+    if opponent and opponent.id == interaction.user.id:
+        return await interaction.response.send_message("❌ Apne aap ko thappad mat maaro bhai!", ephemeral=True)
+    
+    view = SlapView(interaction.user, opponent)
+    intro = f"💥 **Slap Fight Arena Commenced!**\n🥋 Fight Setup: {interaction.user.mention} vs {opponent.mention if opponent else '🤖 Stardust Bot'}\n\n👉 Turn: {interaction.user.mention}"
+    await interaction.response.send_message(content=intro, view=view)
 
 # Deploy System Launch Configuration
 keep_alive()
