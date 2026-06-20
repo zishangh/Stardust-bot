@@ -2377,28 +2377,28 @@ def get_ff_rank(level):
     elif level < 60: return "🏆 Heroic"
     else: return "👑 Grandmaster"
 
-@bot.tree.command(name="rank", description="🎮 Check your Free Fire style server level and rank tier status.")
-async def rank(interaction: discord.Interaction, member: discord.User = None):
+@bot.tree.command(name="ffrank", description="🎮 Check your Free Fire style server level and rank tier status.")
+async def ffrank(interaction: discord.Interaction, member: discord.User = None):
     target = member or interaction.user
     user_id = str(target.id)
     ranks = load_rank_data()
-    
+
     user_data = ranks.get(user_id, {"xp": 0, "level": 1})
     lvl = user_data["level"]
     xp = user_data["xp"]
     xp_needed = lvl * 100
     tier = get_ff_rank(lvl)
-    
+
     embed = discord.Embed(title=f"🎮 {target.display_name}'s Rank Profile", color=discord.Color.gold())
     embed.set_thumbnail(url=target.display_avatar.url)
     embed.add_field(name="✨ Current Tier", value=f"**{tier}**", inline=False)
-    embed.add_field(name="📊 Level", value=f"` {lvl} `", inline=True)
-    embed.add_field(name="🧪 Experience (XP)", value=f"` {xp} / {xp_needed} XP `", inline=True)
-    
+    embed.add_field(name="📊 Level", value=f"`{lvl}`", inline=True)
+    embed.add_field(name="🧪 Experience (XP)", value=f"`{xp} / {xp_needed} XP`", inline=True)
+
     progress = min(int((xp / xp_needed) * 10), 10)
     bar = "🟩" * progress + "⬛" * (10 - progress)
     embed.add_field(name="📈 Progress Bar", value=bar, inline=False)
-    
+
     await interaction.response.send_message(embed=embed)
 # ==============================================================================
 # 🎮 STARDUST CAFE CASINO & MINI-GAMES SUITE (BUTTON BASED)
