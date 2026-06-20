@@ -2710,6 +2710,58 @@ async def play_slap(interaction: discord.Interaction, opponent: discord.User = N
     view = SlapView(interaction.user, opponent)
     intro = f"💥 **Slap Fight Arena Commenced!**\n🥋 Fight Setup: {interaction.user.mention} vs {opponent.mention if opponent else '🤖 Stardust Bot'}\n\n👉 Turn: {interaction.user.mention}"
     await interaction.response.send_message(content=intro, view=view)
+# ==========================================
+# 🗳️ MODULE 1: ADVANCED INTERACTIVE POLL MATRIX
+# ==========================================
+
+@bot.tree.command(name="matrixpoll", description="🗳️ Launch a high-end server-wide interactive opinion poll framework.")
+async def matrixpoll(interaction: discord.Interaction, topic: str):
+    embed = discord.Embed(
+        title="🗳️ Stardust Infrastructure - Opinion Poll",
+        description=f"\n📊 **Proposed Query:**\n{topic}\n\n"
+                    f"🔹 React with 👍 to **APPROVE**\n"
+                    f"🔸 React with 👎 to **REJECT**",
+        color=0xF5EAE1 # Matching your website aesthetic color
+    )
+    embed.set_footer(text=f"Transaction initiated by: {interaction.user.display_name}")
+    
+    await interaction.response.send_message(embed=embed)
+    # Fetching response to attach reactions automatically
+    message = await interaction.original_response()
+    await message.add_reaction("👍")
+    await message.add_reaction("👎")
+
+# ==========================================
+# 🎮 MODULE 2: RECREATIONAL SYSTEM TOOLS
+# ==========================================
+
+# 🧠 INSTANT TECH INTELLIGENCE/QUOTES
+import random
+@bot.tree.command(name="stardustquote", description="🧠 Pull an inspirational or high-tech engineering quote from the cloud.")
+async def stardustquote(interaction: discord.Interaction):
+    quotes = [
+        "“Talk is cheap. Show me the code.” – Linus Torvalds",
+        "“Programs must be written for people to read, and only incidentally for machines to execute.” – Abelson & Sussman",
+        "“The advance of technology is based on making it fit in so that you don't even notice it, so it's part of everyday life.” – Bill Gates",
+        "“Stay hungry, stay foolish.” – Steve Jobs",
+        "“The matrix is everywhere. It is all around us.” – Morpheus"
+    ]
+    selected = random.choice(quotes)
+    embed = discord.Embed(description=f"**{selected}**", color=0xF5EAE1)
+    embed.set_footer(text="Stardust Thought Database")
+    await interaction.response.send_message(embed=embed)
+
+# 🎲 ADVANCED RANDOM NUMBER ARRAY (DICE MATRIX)
+@bot.tree.command(name="rollmatrix", description="🎲 Roll an enterprise-grade polyhedral dice array (1-100).")
+async def rollmatrix(interaction: discord.Interaction):
+    result = random.randint(1, 100)
+    embed = discord.Embed(
+        title="🎲 Dice Simulation Complete", 
+        description=f"The system generated a random quantum value of: **`{result}`**", 
+        color=0xF5EAE1
+    )
+    embed.set_footer(text="Stardust Pseudo-Random Number Generator")
+    await interaction.response.send_message(embed=embed)
 
 # Deploy System Launch Configuration
 keep_alive()
